@@ -1,0 +1,1500 @@
+<meta charset="utf-8">
+<title>후동부 사무실</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Do+Hyeon&display=swap" rel="stylesheet">
+<style>
+/* Layout: 잔디 블록 상단바 → 왼쪽 인벤토리(내 자리·출퇴근·컨텐츠·현황) + 오른쪽 사무실 월드와 핫바. 팀원 데이터는 공유 저장소에서 실시간으로 */
+:root {
+  color-scheme: dark;
+  --sky: #1d2433;
+  --ink: #f3f0e6;
+  --ink-dim: #b8b2a4;
+  --ink-mute: #8f897c;
+  --stone: #3a3a3a;
+  --stone-hi: #5a5a5a;
+  --stone-lo: #1e1e1e;
+  --well: #262626;
+  --row: #313131;
+  --slot: #8b8b8b;
+  --grass: #5c9a35;
+  --grass-lo: #3d6b22;
+  --dirt: #6b4a2f;
+  --dirt-lo: #4a321f;
+  --plank: #a87f4f;
+  --plank-lo: #8a643a;
+  --dark-oak: #4a3420;
+  --dark-oak-lo: #2e2014;
+  --hoodie: #7fb0aa;
+  --gold: #f4c542;
+  --xp: #80d040;
+  --xp-lo: #3c7a18;
+  --red: #e0533f;
+  --sea: #2f6f86;
+  --f-pixel: 'Press Start 2P', 'Do Hyeon', monospace;
+  --f-kr: 'Do Hyeon', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--sky); color: var(--ink); }
+body { font-family: var(--f-kr); font-size: 17px; line-height: 1.35; -webkit-font-smoothing: none; }
+button, input, select { font: inherit; color: inherit; }
+canvas { image-rendering: pixelated; display: block; }
+.app {
+  min-height: 100%;
+  display: flex; flex-direction: column; gap: 12px;
+  padding-block: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* ---------- 마크 UI ---------- */
+.panel {
+  background: var(--stone);
+  border: 3px solid #000;
+  box-shadow: inset 3px 3px 0 var(--stone-hi), inset -3px -3px 0 var(--stone-lo);
+  padding: 14px;
+  min-width: 0;
+}
+.mc-btn {
+  background: #6f6f6f;
+  border: 3px solid #000;
+  box-shadow: inset 3px 3px 0 #a9a9a9, inset -3px -3px 0 #3f3f3f;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-shadow: 2px 2px 0 #2a2a2a;
+  font-size: 16px; line-height: 1.2;
+  white-space: nowrap;
+}
+.mc-btn:hover { background: #8a8aa8; }
+.mc-btn:active { box-shadow: inset -3px -3px 0 #a9a9a9, inset 3px 3px 0 #3f3f3f; }
+.mc-btn:disabled { opacity: .45; cursor: not-allowed; }
+.mc-btn.green { background: #3f8a22; box-shadow: inset 3px 3px 0 #74c94a, inset -3px -3px 0 #22500f; }
+.mc-btn.green:hover { background: #4ea42b; }
+.mc-btn.red { background: #9c3324; box-shadow: inset 3px 3px 0 #e07a68, inset -3px -3px 0 #5a1a10; }
+.mc-btn.red:hover { background: #b83d2b; }
+.mc-btn[aria-pressed="false"] { opacity: .6; }
+.mc-btn.small { padding: 5px 8px; font-size: 14px; }
+:is(.mc-btn, .slot, .desk, .mob, input, select):focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.label { font-family: var(--f-pixel); font-size: 10px; letter-spacing: .06em; color: var(--gold); text-shadow: 2px 2px 0 #000; }
+.section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 12px; }
+.section-head .aside { font-size: 14px; color: var(--ink-mute); }
+.muted { color: var(--ink-mute); font-size: 14px; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 15px; color: var(--ink-dim); }
+.txt {
+  width: 100%; min-width: 0;
+  background: #000; border: 2px solid #a0a0a0;
+  padding: 7px 10px; font-size: 16px; color: var(--ink);
+}
+.txt::placeholder { color: #7d7d7d; }
+select.txt { appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, #bbb 50%), linear-gradient(-45deg, transparent 50%, #bbb 50%); background-position: calc(100% - 16px) 55%, calc(100% - 10px) 55%; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 28px; }
+.notice {
+  border: 2px solid #000; padding: 8px 10px; font-size: 15px;
+  background: #4a3a14; color: #ffe9a8;
+}
+.notice.info { background: #173444; color: #cdeefc; }
+
+/* ---------- 상단바 ---------- */
+.topbar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 14px;
+  border: 3px solid #000;
+  background:
+    linear-gradient(var(--grass) 0 18px, var(--grass-lo) 18px 24px, transparent 24px),
+    repeating-linear-gradient(90deg, var(--dirt) 0 12px, var(--dirt-lo) 12px 16px, var(--dirt) 16px 28px);
+}
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-block {
+  width: 44px; height: 44px; flex: none; border: 3px solid #000;
+  background: linear-gradient(var(--grass) 0 12px, var(--grass-lo) 12px 15px, transparent 15px), repeating-linear-gradient(45deg, var(--dirt) 0 6px, var(--dirt-lo) 6px 9px);
+}
+.brand h1 { margin: 0; font-size: 28px; font-weight: 400; line-height: 1; color: #fff; text-shadow: 3px 3px 0 #000; }
+.brand p { margin: 4px 0 0; font-family: var(--f-pixel); font-size: 9px; color: #e9f5d8; text-shadow: 2px 2px 0 #000; }
+.top-right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.headcount {
+  font-size: 16px; background: rgba(0,0,0,.55); border: 2px solid #000; padding: 6px 10px;
+  text-shadow: 2px 2px 0 #000; white-space: nowrap;
+}
+.headcount b { color: var(--xp); font-weight: 400; }
+
+/* ---------- 그리드 ---------- */
+.main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.world-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; order: -1; }
+@media (min-width: 1040px) {
+  html, body { height: 100%; }
+  .app { height: 100%; }
+  .main { flex: 1; min-height: 0; grid-template-columns: 380px minmax(0, 1fr); }
+  .side { min-height: 0; overflow-y: auto; padding-right: 4px; }
+  .world-col { min-height: 0; order: 0; }
+  .office { flex: 1; min-height: 520px; }
+}
+
+/* ---------- 내 자리 ---------- */
+.profile { display: flex; gap: 14px; align-items: center; }
+.face-frame {
+  flex: none; width: 72px; height: 72px;
+  background: var(--slot); border: 3px solid #000;
+  box-shadow: inset 3px 3px 0 #373737, inset -3px -3px 0 #fff;
+  display: grid; place-items: center;
+}
+.face-frame canvas { width: 52px; height: 52px; }
+.who { min-width: 0; flex: 1; }
+.who-name { font-size: 25px; line-height: 1.05; text-shadow: 2px 2px 0 #000; overflow-wrap: anywhere; }
+.rank { display: inline-block; margin-left: 6px; vertical-align: 3px; font-size: 14px; color: #2b2100; background: var(--gold); border: 2px solid #000; padding: 1px 7px 0; text-shadow: none; }
+.pill { display: inline-block; font-size: 14px; padding: 2px 8px 1px; border: 2px solid #000; white-space: nowrap; }
+.pill.in { background: var(--xp); color: #10240a; }
+.pill.out { background: #6a6a6a; color: #eee; }
+.pill.none { background: #3d3d3d; color: #bbb; }
+.who-sub { margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 14px; color: var(--ink-dim); }
+.clock-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.clock-row .mc-btn { padding: 12px 8px; font-size: 19px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.stat { background: var(--well); border: 2px solid #000; padding: 8px 10px; }
+.stat .k { font-size: 13px; color: var(--ink-mute); }
+.stat .v { font-size: 22px; line-height: 1.1; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.mini-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+.join-form { display: flex; flex-direction: column; gap: 10px; }
+.skin-pick { display: flex; gap: 12px; align-items: center; }
+.skin-preview {
+  flex: none; width: 64px; height: 96px;
+  background: #1b1b1b; border: 2px solid #000;
+  display: grid; place-items: center;
+}
+.skin-preview canvas { width: 32px; height: 64px; }
+.file-btn { position: relative; overflow: hidden; display: inline-block; }
+.file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* ---------- 업무 ---------- */
+.tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.task { display: flex; align-items: center; gap: 10px; background: var(--row); border: 2px solid #000; padding: 6px 8px; font-size: 16px; }
+.task input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none;
+  width: 20px; height: 20px; flex: none; margin: 0;
+  background: var(--slot); border: 2px solid #000; box-shadow: inset 2px 2px 0 #373737;
+  cursor: pointer; display: grid; place-items: center;
+}
+.task input[type="checkbox"]:checked { background: var(--xp); box-shadow: inset 2px 2px 0 #b9f08a, inset -2px -2px 0 var(--xp-lo); }
+.task input[type="checkbox"]:checked::after { content: ""; width: 8px; height: 8px; background: #10240a; }
+.task .t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.task.done .t { color: var(--ink-mute); text-decoration: line-through; }
+.tag { flex: none; font-size: 12px; padding: 1px 6px 0; border: 2px solid #000; background: var(--sea); color: #e8f7fd; white-space: nowrap; max-width: 40%; overflow: hidden; text-overflow: ellipsis; }
+.tag.none { background: #4a4a4a; color: #ccc; }
+.del { flex: none; border: 0; background: none; cursor: pointer; color: var(--ink-mute); font-family: var(--f-pixel); font-size: 10px; padding: 4px; }
+.del:hover { color: var(--red); }
+.add-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-top: 8px; }
+.add-row select { grid-column: 1 / -1; }
+
+/* ---------- 컨텐츠 ---------- */
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.tab { text-align: left; padding: 9px 12px; white-space: normal; flex: 1 1 140px; }
+.tab .t-name { display: block; font-size: 18px; }
+.tab .t-pct { display: block; margin-top: 4px; font-family: var(--f-pixel); font-size: 9px; color: #ececec; }
+.tab[aria-selected="true"] { background: var(--sea); box-shadow: inset 3px 3px 0 #79c4dc, inset -3px -3px 0 #183f4d; }
+.content-card { margin-top: 12px; background: var(--well); border: 3px solid #000; padding: 12px; }
+.content-title { font-size: 22px; text-shadow: 2px 2px 0 #000; overflow-wrap: anywhere; }
+.xp-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--ink-dim); margin-top: 8px; }
+.xp-level { font-family: var(--f-pixel); font-size: 11px; color: var(--xp); text-shadow: 2px 2px 0 #000; }
+.xp-bar { margin-top: 6px; height: 14px; border: 2px solid #000; background: #1b1b1b; position: relative; overflow: hidden; }
+.xp-fill { height: 100%; width: 0; background: linear-gradient(var(--xp) 0 50%, #62b02c 50% 100%); box-shadow: inset 0 -2px 0 var(--xp-lo); transition: width .35s steps(8); }
+.xp-bar::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), #000 calc(10% - 2px) 10%); opacity: .55; }
+.c-group { margin-top: 12px; }
+.c-group-name { font-size: 15px; color: var(--hoodie); margin-bottom: 4px; }
+.content-admin { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.content-admin .txt { flex: 1 1 160px; }
+
+/* ---------- 출퇴근 현황 ---------- */
+.board-wrap { overflow-x: auto; }
+.board { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+.board th { text-align: left; font-weight: 400; color: var(--ink-mute); font-size: 13px; padding: 4px 6px; border-bottom: 2px solid #000; white-space: nowrap; }
+.board td { padding: 6px; border-bottom: 2px solid #2a2a2a; vertical-align: middle; }
+.board tr.sel td { background: #2c3a2a; }
+.board tr { cursor: pointer; }
+.board tr:hover td { background: #333; }
+.board .nm { display: flex; align-items: center; gap: 8px; min-width: 110px; }
+.board .nm canvas { width: 24px; height: 24px; flex: none; border: 2px solid #000; }
+.board .nm span { overflow-wrap: anywhere; }
+.board .num { text-align: right; white-space: nowrap; }
+
+.detail { margin-top: 14px; background: var(--well); border: 3px solid #000; padding: 12px; }
+.detail-head { display: flex; gap: 10px; align-items: center; }
+.detail-head canvas { width: 40px; height: 40px; border: 2px solid #000; flex: none; }
+.detail-name { font-size: 20px; overflow-wrap: anywhere; }
+.detail-quote { font-size: 14px; color: var(--ink-dim); margin-top: 2px; overflow-wrap: anywhere; }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 12px; align-items: end; }
+.wk { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.wk .bar-box { height: 90px; width: 100%; display: flex; align-items: flex-end; justify-content: center; background: #1a1a1a; border: 2px solid #000; }
+.wk .bar { width: 70%; background: linear-gradient(90deg, var(--xp) 0 50%, #62b02c 50%); border-top: 3px solid #b9f08a; min-height: 0; }
+.wk .bar.today { background: linear-gradient(90deg, var(--gold) 0 50%, #d9a92a 50%); border-top-color: #fff2a8; }
+.wk .h { font-size: 13px; font-variant-numeric: tabular-nums; }
+.wk .d { font-family: var(--f-pixel); font-size: 8px; color: var(--ink-mute); }
+.wk .n { font-size: 12px; color: var(--xp); }
+.legend { margin-top: 8px; font-size: 13px; color: var(--ink-mute); }
+
+/* ---------- 알림 ---------- */
+.log { list-style: none; margin: 0; padding: 10px; background: #0d0d0d; border: 3px solid #000; max-height: 170px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.log li { display: flex; gap: 8px; min-width: 0; }
+.log time { flex: none; font-family: var(--f-pixel); font-size: 9px; color: var(--xp); padding-top: 4px; }
+.log span { min-width: 0; overflow-wrap: anywhere; color: #d9d4c6; }
+
+/* ---------- 사무실 ---------- */
+.office {
+  position: relative; min-height: 560px; border: 3px solid #000; overflow: hidden; touch-action: none;
+  background: repeating-linear-gradient(0deg, var(--plank) 0 30px, var(--plank-lo) 30px 33px), var(--plank);
+}
+.office::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, transparent 0 94px, rgba(0,0,0,.18) 94px 97px, transparent 97px 190px); opacity: .7; }
+.wall { position: absolute; left: 0; right: 0; top: 0; height: 17%; min-height: 82px; border-bottom: 6px solid #2b2b2b; background: repeating-linear-gradient(0deg, #6d6d6d 0 18px, #474747 18px 21px), #6d6d6d; }
+.wall::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 40px, #474747 40px 43px, transparent 43px 84px); -webkit-mask: repeating-linear-gradient(0deg, #000 0 21px, transparent 21px 42px); mask: repeating-linear-gradient(0deg, #000 0 21px, transparent 21px 42px); }
+.window { position: absolute; top: 14px; width: 64px; height: 46px; border: 4px solid var(--dark-oak); background: linear-gradient(#9fd3f5 0 55%, #c6e8fb 55%); }
+.window::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: var(--dark-oak); }
+.window.w1 { right: 26%; } .window.w2 { right: 6%; }
+.clock-board { position: absolute; right: 44%; top: 16px; background: #1b1b1b; border: 4px solid var(--dark-oak); padding: 4px 10px 3px; font-family: var(--f-pixel); font-size: 11px; color: var(--xp); }
+.sign { position: absolute; left: 4%; top: 12px; background: var(--plank); border: 4px solid var(--dark-oak); box-shadow: 4px 4px 0 rgba(0,0,0,.35); padding: 6px 16px 5px; text-align: center; color: #2b1a0c; z-index: 2; white-space: nowrap; }
+.sign b { display: block; font-weight: 400; font-size: 22px; line-height: 1; }
+.sign small { display: block; font-family: var(--f-pixel); font-size: 8px; margin-top: 5px; color: #4a2f17; }
+.tip { position: absolute; left: 10px; bottom: 10px; z-index: 3000; background: rgba(0,0,0,.72); border: 2px solid #555; padding: 5px 9px; font-size: 14px; color: #ddd; pointer-events: none; max-width: calc(100% - 20px); }
+.tip b { color: var(--gold); font-weight: 400; }
+
+.desk { position: absolute; width: clamp(76px, 17%, 132px); transform: translateX(-50%); cursor: pointer; border: 0; padding: 0; background: none; display: flex; flex-direction: column; align-items: center; }
+.desk.boss { width: clamp(124px, 27%, 210px); }
+.desk-top { position: relative; width: 100%; height: 22px; background: repeating-linear-gradient(90deg, #b88a55 0 20px, #9a6f40 20px 22px); border: 3px solid #2a1a0c; border-bottom-width: 0; }
+.desk-front { position: relative; width: 100%; height: 30px; background: repeating-linear-gradient(0deg, #8a643a 0 9px, #6e4e2c 9px 10px); border: 3px solid #2a1a0c; }
+.desk.boss .desk-top { background: repeating-linear-gradient(90deg, #5b4127 0 20px, #45301b 20px 22px); }
+.desk.boss .desk-front { height: 36px; background: repeating-linear-gradient(0deg, var(--dark-oak) 0 11px, var(--dark-oak-lo) 11px 12px); }
+.plate { position: absolute; left: 50%; bottom: 7px; transform: translateX(-50%); background: var(--gold); color: #2b2100; border: 2px solid #000; font-size: 14px; line-height: 1; padding: 3px 8px 2px; white-space: nowrap; max-width: 92%; overflow: hidden; text-overflow: ellipsis; }
+.monitor { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); width: 40%; height: 26px; background: #222; border: 3px solid #111; }
+.monitor::before { content: ""; position: absolute; inset: 3px; background: #123b3a; box-shadow: inset 0 0 0 1px #2c8b86; }
+.monitor.off::before { background: #0c0c0c; box-shadow: none; }
+.monitor::after { content: ""; position: absolute; left: 50%; top: 100%; width: 8px; height: 4px; margin-left: -4px; background: #111; }
+.screen-text { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--f-pixel); font-size: 7px; color: #8ff0e6; z-index: 1; }
+.gold-block { position: absolute; bottom: 100%; right: 8%; width: 18px; height: 18px; background: var(--gold); border: 2px solid #8a6a10; box-shadow: inset 3px 3px 0 #fff2a8, inset -3px -3px 0 #c99a1c; }
+.plant { position: absolute; bottom: 100%; left: 8%; width: 16px; height: 22px; }
+.plant::before { content: ""; position: absolute; left: 3px; bottom: 0; width: 10px; height: 8px; background: #8a4b2a; border: 2px solid #3a1d0e; }
+.plant::after { content: ""; position: absolute; left: 0; bottom: 8px; width: 16px; height: 14px; background: #4f9a30; box-shadow: inset 4px 0 0 #6fc24a, inset -4px -4px 0 #2f6a1a; }
+.paper { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) rotate(-3deg); background: #f3efe2; color: #3a2f20; border: 2px solid #6b5d48; font-size: 13px; line-height: 1.1; padding: 3px 6px 2px; white-space: nowrap; }
+.paper.off { background: #c9c3b3; }
+.chair { width: 34%; height: 12px; margin-top: 4px; background: #3c3c3c; border: 2px solid #111; }
+.desk-label { margin-top: 4px; font-size: 14px; line-height: 1.1; white-space: nowrap; background: rgba(0,0,0,.66); color: #f1dcb4; border: 2px solid rgba(0,0,0,.4); padding: 2px 6px 1px; max-width: 160%; overflow: hidden; text-overflow: ellipsis; }
+.desk.taken .desk-label { color: #fff; }
+.desk.selected .desk-label { background: var(--gold); color: #2b2100; }
+
+.mob { position: absolute; width: 64px; transform: translate(-50%, -100%); cursor: grab; touch-action: none; }
+.mob.dragging { cursor: grabbing; }
+.nametag { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.55); color: #fff; padding: 2px 7px 1px; font-size: 15px; white-space: nowrap; line-height: 1.15; pointer-events: none; }
+.nametag em { font-style: normal; color: var(--gold); }
+.mob.me .nametag { outline: 2px solid var(--xp); }
+.bubble { position: absolute; bottom: calc(100% + 34px); left: 50%; transform: translateX(-50%); width: max-content; max-width: 210px; background: #fff; color: #111; border: 3px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,.4); padding: 7px 10px 6px; font-size: 15px; line-height: 1.3; pointer-events: none; z-index: 2; overflow-wrap: anywhere; }
+.bubble::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -8px; border: 8px solid transparent; border-top-color: #000; }
+.figure { position: relative; width: 64px; height: 128px; filter: drop-shadow(3px 0 0 rgba(0,0,0,.25)); }
+.figure .part { position: absolute; }
+.figure .head { left: 16px; top: 0; width: 32px; height: 32px; z-index: 3; }
+.figure .body { left: 16px; top: 32px; width: 32px; height: 48px; z-index: 2; }
+.figure .arm-r { left: 0; top: 32px; width: 16px; height: 48px; transform-origin: 50% 6px; z-index: 1; }
+.figure .arm-l { left: 48px; top: 32px; width: 16px; height: 48px; transform-origin: 50% 6px; z-index: 1; }
+.figure .leg-r { left: 16px; top: 80px; width: 16px; height: 48px; transform-origin: 50% 2px; }
+.figure .leg-l { left: 32px; top: 80px; width: 16px; height: 48px; transform-origin: 50% 2px; }
+.mob.facing-left .figure { transform: scaleX(-1); }
+.mob::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -5px; height: 9px; background: rgba(0,0,0,.28); border-radius: 50%; z-index: -1; }
+@keyframes swing-a { 0%,100% { transform: rotate(28deg); } 50% { transform: rotate(-28deg); } }
+@keyframes swing-b { 0%,100% { transform: rotate(-28deg); } 50% { transform: rotate(28deg); } }
+@keyframes flail-a { 0%,100% { transform: rotate(150deg); } 50% { transform: rotate(110deg); } }
+@keyframes flail-b { 0%,100% { transform: rotate(-110deg); } 50% { transform: rotate(-150deg); } }
+@keyframes kick { 0%,100% { transform: rotate(18deg); } 50% { transform: rotate(-18deg); } }
+@keyframes breathe { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes shake { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes pop { from { transform: translateX(-50%) scale(.6); } to { transform: translateX(-50%) scale(1); } }
+.mob.walking .arm-r, .mob.walking .leg-l { animation: swing-a .5s steps(4) infinite; }
+.mob.walking .arm-l, .mob.walking .leg-r { animation: swing-b .5s steps(4) infinite; }
+.mob.idle .head { animation: breathe 2.4s steps(2) infinite; }
+.mob.dragging .figure { animation: shake .18s steps(2) infinite; }
+.mob.dragging .arm-r { animation: flail-a .22s steps(2) infinite; }
+.mob.dragging .arm-l { animation: flail-b .22s steps(2) infinite; }
+.mob.dragging .leg-r { animation: kick .2s steps(2) infinite; }
+.mob.dragging .leg-l { animation: kick .2s steps(2) infinite reverse; }
+.bubble:not([hidden]) { animation: pop .12s steps(3); }
+
+.hotbar-wrap { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.hotbar { display: flex; background: #000; border: 3px solid #000; overflow-x: auto; max-width: 100%; }
+.slot { position: relative; width: 52px; height: 52px; flex: none; background: var(--slot); border: 0; box-shadow: inset 3px 3px 0 #373737, inset -3px -3px 0 #c6c6c6; margin: 2px; cursor: pointer; display: grid; place-items: center; padding: 0; }
+.slot canvas { width: 32px; height: 32px; }
+.slot.out canvas { filter: grayscale(1) brightness(.7); }
+.slot .q { font-family: var(--f-pixel); font-size: 14px; color: #5e5e5e; text-shadow: 1px 1px 0 #b5b5b5; }
+.slot .num { position: absolute; right: 3px; bottom: 2px; font-family: var(--f-pixel); font-size: 8px; color: #fff; text-shadow: 1px 1px 0 #000; }
+.slot .dot { position: absolute; left: 4px; top: 4px; width: 8px; height: 8px; border: 2px solid #000; background: var(--xp); }
+.slot.active { box-shadow: inset 0 0 0 3px #fff; outline: 3px solid #fff; outline-offset: -1px; z-index: 1; }
+.hotbar-caption { font-size: 15px; color: var(--ink-dim); overflow-wrap: anywhere; }
+.hotbar-caption b { color: #fff; font-weight: 400; }
+
+@media (max-width: 560px) {
+  .brand h1 { font-size: 24px; }
+  .office { min-height: 560px; }
+  .tip, .window, .clock-board { display: none; }
+  .slot { width: 36px; height: 36px; margin: 1px; }
+  .slot canvas { width: 22px; height: 22px; }
+  .slot .num { font-size: 7px; }
+  .sign b { font-size: 18px; }
+  .desk-label, .paper, .plate { font-size: 12px; }
+  .form-row { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mob *, .bubble { animation: none !important; }
+  .xp-fill { transition: none; }
+}
+</style>
+
+<style>
+/* ---------- v3 추가: 실시간 시계, 상태창, 진행도, 로그인 ---------- */
+[hidden] { display: none !important; }
+/* 상태창 버튼 글자 또렷하게 */
+.modal .mc-btn { color: #ffffff; text-shadow: none; font-size: 16px; }
+.modal .mc-btn.green { background: #2f7a1a; }
+.modal .mc-btn.green:hover { background: #3a9221; }
+.modal .mc-btn.red { background: #a32a1b; }
+.modal .mc-btn.red:hover { background: #bd3422; }
+.modal .mc-btn.close { background: #6f6f6f; }
+:root {
+  --inv: #c6c6c6;
+  --inv-hi: #ffffff;
+  --inv-lo: #555555;
+  --inv-ink: #2b2b2b;
+  --inv-mute: #5a5a5a;
+  --inv-well: #8b8b8b;
+}
+.now {
+  display: flex; flex-direction: column; align-items: flex-end;
+  background: rgba(0,0,0,.6); border: 2px solid #000; padding: 4px 10px 3px;
+  text-shadow: 2px 2px 0 #000; line-height: 1.1;
+}
+.now .date { font-size: 15px; color: #e9f5d8; white-space: nowrap; }
+.now .time { font-family: var(--f-pixel); font-size: 13px; color: var(--xp); font-variant-numeric: tabular-nums; margin-top: 3px; }
+.clock-board { right: 44%; font-size: 10px; line-height: 1.5; text-align: center; }
+.clock-board .d { color: #e9f5d8; font-size: 8px; }
+
+/* 상태창 (마크 인벤토리 느낌) */
+.modal-back {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(10,12,18,.72);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  overflow-y: auto;
+}
+.modal {
+  width: 100%; max-width: 760px; margin-block: auto;
+  background: var(--inv); color: var(--inv-ink);
+  border: 3px solid #000;
+  box-shadow: inset 3px 3px 0 var(--inv-hi), inset -3px -3px 0 var(--inv-lo), 8px 8px 0 rgba(0,0,0,.45);
+  padding: 18px;
+  position: relative;
+}
+.modal h2 { margin: 0; font-size: 28px; font-weight: 400; line-height: 1.05; overflow-wrap: anywhere; }
+.modal .close {
+  position: absolute; top: 10px; right: 10px;
+  width: 36px; height: 36px; padding: 0;
+  font-family: var(--f-pixel); font-size: 12px;
+}
+.st-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: start; padding-right: 40px; }
+.st-avatar {
+  width: 112px; height: 160px;
+  background: #1e1e1e; border: 3px solid;
+  border-color: var(--inv-lo) var(--inv-hi) var(--inv-hi) var(--inv-lo);
+  display: grid; place-items: center;
+}
+.st-avatar canvas { width: 64px; height: 128px; }
+.st-role { display: inline-block; margin-top: 6px; font-size: 15px; background: var(--gold); border: 2px solid #000; padding: 1px 8px 0; }
+.st-quote { margin-top: 8px; font-size: 15px; color: var(--inv-mute); overflow-wrap: anywhere; }
+.st-now { margin-top: 8px; font-size: 14px; color: var(--inv-mute); }
+.st-now b { font-weight: 400; color: var(--inv-ink); font-variant-numeric: tabular-nums; }
+.st-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.st-stat { background: var(--inv-well); border: 3px solid; border-color: #373737 #fff #fff #373737; padding: 6px 10px; color: #fff; text-shadow: 2px 2px 0 #3f3f3f; min-width: 0; }
+.st-stat .k { font-size: 13px; color: #f0f0f0; }
+.st-stat .v { font-size: 21px; line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.st-sec { margin-top: 18px; }
+.st-sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; border-bottom: 3px solid var(--inv-lo); padding-bottom: 4px; margin-bottom: 10px; }
+.st-sec-head h3 { margin: 0; font-size: 20px; font-weight: 400; }
+.st-sec-head span { font-size: 14px; color: var(--inv-mute); }
+.st-empty { font-size: 15px; color: var(--inv-mute); }
+
+.ptask {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center;
+  background: #b2b2b2; border: 2px solid #000; padding: 8px 10px; margin-bottom: 6px;
+}
+.ptask .pt-name { font-size: 17px; overflow-wrap: anywhere; min-width: 0; }
+.ptask.done .pt-name { text-decoration: line-through; color: var(--inv-mute); }
+.ptask .pt-meta { display: flex; align-items: center; gap: 6px; justify-self: end; }
+.ptask .pt-pct { font-family: var(--f-pixel); font-size: 10px; width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+.ptask .tag { max-width: 140px; }
+.seg { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; }
+.seg button, .seg span {
+  height: 16px; border: 2px solid #000; background: #3a3a3a; padding: 0; cursor: pointer;
+}
+.seg span { cursor: default; }
+.seg .on { background: linear-gradient(var(--xp) 0 50%, #62b02c 50%); }
+.ptask.done .seg .on { background: linear-gradient(var(--gold) 0 50%, #d9a92a 50%); }
+.seg button:hover { outline: 2px solid #fff; outline-offset: -4px; }
+.seg-zero { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: 12px; color: var(--inv-mute); }
+.seg-zero button { border: 0; background: none; padding: 0; color: var(--inv-mute); cursor: pointer; text-decoration: underline; font-size: 12px; }
+
+.modal .txt { background: #000; color: #f3f0e6; }
+.modal .add-row { margin-top: 10px; }
+.cprog { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; background: #b2b2b2; border: 2px solid #000; padding: 8px 10px; margin-bottom: 6px; }
+.cprog .cp-name { font-size: 17px; overflow-wrap: anywhere; }
+.cprog .cp-num { font-size: 14px; color: var(--inv-ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cprog .xp-bar { grid-column: 1 / -1; margin-top: 2px; }
+.cprog .cp-mine { grid-column: 1 / -1; font-size: 13px; color: var(--inv-mute); }
+.cprog .del-c { grid-column: 1 / -1; justify-self: start; }
+.modal .week .wk .bar-box { background: #2a2a2a; }
+.modal .week .h, .modal .week .d { color: var(--inv-ink); }
+.modal .week .n { color: #2e6a12; }
+.modal .legend { color: var(--inv-mute); }
+.modal .notice { margin-top: 10px; }
+.st-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+/* 사이드 컨텐츠 요약 */
+.c-sum { display: flex; flex-direction: column; gap: 10px; }
+.c-sum-row .top { display: flex; justify-content: space-between; gap: 8px; font-size: 16px; }
+.c-sum-row .top span:last-child { color: var(--ink-mute); font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* 로그인 */
+.login { display: flex; flex-direction: column; gap: 10px; }
+.login .clock-row { margin-top: 0; }
+.backend { font-size: 12px; color: var(--ink-mute); }
+
+@media (max-width: 560px) {
+  .st-head { grid-template-columns: 1fr; padding-right: 0; }
+  .st-avatar { width: 100%; height: 150px; }
+  .st-stats { grid-template-columns: 1fr 1fr; }
+  .modal { padding: 14px; }
+  .modal h2 { padding-right: 44px; }
+  .now .date { font-size: 13px; }
+}
+</style>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-block" aria-hidden="true"></div>
+      <div>
+        <h1>후동부 사무실</h1>
+        <p>HUDONGBU OFFICE · ONLINE</p>
+      </div>
+    </div>
+    <div class="top-right">
+      <div class="now" aria-label="현재 날짜와 시간"><span class="date" id="now-date">-</span><span class="time" id="now-time">--:--:--</span></div>
+      <span class="headcount" id="headcount">근무 중 <b>0</b>명 · 팀원 0명</span>
+      <button class="mc-btn" id="btn-sound" type="button" aria-pressed="true">사운드 켜짐</button>
+      <button class="mc-btn green" id="btn-meeting" type="button">회의 소집</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <aside class="side">
+      <section class="panel" aria-label="내 자리">
+        <div class="section-head"><span class="label">내 자리</span><span class="aside" id="me-aside"></span></div>
+        <div id="me-box"></div>
+      </section>
+
+      <section class="panel" aria-label="오늘 출퇴근 현황">
+        <div class="section-head"><span class="label">오늘 출퇴근 현황</span><span class="aside" id="today-label"></span></div>
+        <div id="board-box"></div>
+      </section>
+
+      <section class="panel" aria-label="진행 중인 컨텐츠">
+        <div class="section-head"><span class="label">진행 중인 컨텐츠</span><span class="aside" id="content-count"></span></div>
+        <div id="content-box"></div>
+      </section>
+
+      <section class="panel" aria-label="사무실 알림">
+        <div class="section-head"><span class="label">사무실 알림</span><span class="backend" id="backend"></span></div>
+        <ul class="log" id="log" aria-live="polite"></ul>
+      </section>
+    </aside>
+
+    <div class="world-col">
+      <div class="office" id="office">
+        <div class="wall" aria-hidden="true"><div class="window w1"></div><div class="window w2"></div></div>
+        <div class="clock-board" id="clock-board" aria-hidden="true"><div class="d" id="board-date">-</div><div id="board-time">00:00</div></div>
+        <div class="sign"><b>후동부 사무실</b><small>EST. HUDONGBU</small></div>
+        <div id="desks"></div>
+        <div id="mobs"></div>
+      </div>
+      <div class="panel hotbar-wrap">
+        <div class="hotbar" id="hotbar" role="toolbar" aria-label="자리 핫바"></div>
+        <div class="hotbar-caption" id="hotbar-caption"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-back" id="modal-back" hidden>
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="st-name"></div>
+</div>
+
+<script>
+(() => {
+  /* ==========================================================
+     웹사이트(GitHub Pages)로 쓸 때만 아래 두 값을 채우세요.
+     claude.ai에서 열면 이 값은 쓰지 않아요.
+     ========================================================== */
+  const SUPABASE = {
+    url: 'https://fnpfnfghkipgjobpgmma.supabase.co',   // 예: https://xxxx.supabase.co
+    key: 'sb_publishable_wHJ5sp8jQ6MLiS5K59jsyg_eQCQQQ6p'    // Supabase의 publishable 키 (sb_publishable_... 또는 anon 키). secret 키는 절대 넣지 마세요!
+  };
+  const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4';
+
+  const BOSS_SKIN = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAADeUlEQVR42u1bT0gUURj/vXX2tmLXpa4pUm1lFHUqCO22tyQkEYvVxYNQm5QmiNAfJLp4WFYFw4wlPHTwZlBdJKJQaxCWbnUxhAg9eHGV16FmejvOzpv1zRtnmvcD8e3M7HN+v/d93/u+954EHNydmaUQwFhXJ4EHsL6HtV/e/WqIIQSwGwT2Wjo3QEu6DvYnnRtwNXCaVy/58PLxis/336xKI+/WOptnZinPEmIyyFe7FkRoCDlEY0zgBSjputT+ueoVR3vpRrkOTckGrP/8hY1yHQCgKdmArz820ZPNOCt85DRRLuABiqO9FAA2ynU4FN9Fx8iEJ8Jq1SLpyW+Lf0d717GDycIUAOD70Qv7itSGD7PPlXQd80+fVBA0iBttK9K5AdqcStWcJ8SCOs8bI25t213LD/c55glOeYRrAS6m2812T29GKnkWLDnWCqoRt/bNyyNcCWBHmBVEFliCLPFqlrAfuBJgbrqAyYk/vt6TzWByYgpz0wVf3YQNen0P8p7NLFUFaL+ZNduXMiNYWNs2ry2sbePMtdv/LCSbkUrYaLPEvRLE0QIMYslkEonWNvN6orUNjY2NnpB3yuTsiFmnP6fpcKyrkzj1P9bVSYhdkNiTx1N+6rTf4sc6DdpNgW7BToVup8E9f+j6ncoysvTubcX9paUlcpDrBwZJI0V+datDKPMMxXqATCgBwvribNorVA1afb5WHD6R4i6UeLU6JCOmSKsGrx5rNonfOH8O0x8+RssF6uvrbduRFCDyQTDyFpBIJKInAEv63vMX0RMgyKTVsjhPgGePHwEAugeHzLaB7sGhUGV887xMsFwuC2WCw8WXUgUQ3WLjVYeRL4YUFBQUoo2zbVco22Y/1/LdsIKIkvj0eoEoMxIEpZQqEQ5IBM0PF6CUUkKI43NfVlYOJgbIHFEeaRafl5fNgTjV0kJCbwG1kAeA94uL6OvvJ/nxcV9dQbMjYFSI8Xjct5HY3Nqq+O2bC1iDz87OTk0d+CmSgkIIZgEvzheUdB3GGQDR/X+o7XElQPgE8Grv35cYIPN8AXz4f4EYr94XWS8IA1ylwtZn/icRNNEFjaZUKtRiaEHb+/MzAHpSDSoXEHQBv0dcWYDX6wGiFiB7/58rgNP2uHFP0zTX6wXsmQI3Zwlk7/9LzwRFzxeQ9VWp+/+BqwVYawoCfgPvgKaAqVC0iAAAAABJRU5ErkJggg==';
+
+  /* ================= 기본 설정 ================= */
+  const DESKS = [
+    { label: '사장실', x: 50, y: 30, boss: true },
+    { label: '01', x: 14, y: 56 }, { label: '02', x: 38, y: 56 }, { label: '03', x: 62, y: 56 }, { label: '04', x: 86, y: 56 },
+    { label: '05', x: 26, y: 81 }, { label: '06', x: 50, y: 81 }, { label: '07', x: 74, y: 81 }
+  ];
+  const seatOf = i => ({ x: DESKS[i].x, y: DESKS[i].y + (DESKS[i].boss ? 6.5 : 5.5) });
+  const NPC_ID = '__boss_npc__';
+  const LINES = {
+    grab: ['어어? 내려 줘!', '근무 중인데 왜 들어!', '이거 산재 아니야?', '멀미 난다…', '높다 높아!'],
+    drop: ['휴, 착지 완료.', '다음엔 엘리베이터 태워 줘.', '어지러워…'],
+    poke: ['두 번 누르면 내 상태창이 열려!', '오늘도 출근 완료!', '업무 진행도 올려야지', '컨텐츠 회의 언제 해?'],
+    meeting: ['회의 시작합니다!', '전원 집합!', '안건 있는 사람?'],
+    bossGrab: ['사장 들어 올리는 직원이 어딨어!', '내려놔! 결재 서류 떨어진다!', '이거 월급에서 깐다?']
+  };
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
+
+  /* ================= 유틸 ================= */
+  const $ = id => document.getElementById(id);
+  function el(tag, props, ...kids) {
+    const e = document.createElement(tag);
+    if (props) for (const [k, v] of Object.entries(props)) {
+      if (v == null || v === false) continue;
+      if (k === 'class') e.className = v;
+      else if (k === 'text') e.textContent = v;
+      else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+      else if (k === 'style') e.style.cssText = v;
+      else e.setAttribute(k, v === true ? '' : v);
+    }
+    for (const k of kids.flat()) if (k != null && k !== false) e.append(k);
+    return e;
+  }
+  const pad = n => String(n).padStart(2, '0');
+  const dateKey = (t = Date.now()) => { const d = new Date(t); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  const hhmm = t => { const d = new Date(t); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+  const hhmmss = t => { const d = new Date(t); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); };
+  const longDate = t => { const d = new Date(t); return d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 (' + WEEKDAY[d.getDay()] + ')'; };
+  const shortDate = t => { const d = new Date(t); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + WEEKDAY[d.getDay()]; };
+  const stamp = t => { if (!t) return ''; const same = dateKey(t) === dateKey(); return (same ? '' : shortDate(t) + ' ') + hhmm(t); };
+  function fmtDur(ms) { const m = Math.max(0, Math.floor(ms / 60000)); const h = Math.floor(m / 60), r = m % 60; return h ? h + '시간 ' + r + '분' : r + '분'; }
+  function fmtShort(ms) { const m = Math.max(0, Math.floor(ms / 60000)); return Math.floor(m / 60) + ':' + pad(m % 60); }
+  const clip = (s, n) => String(s == null ? '' : s).trim().slice(0, n);
+  const uidShort = () => Math.random().toString(36).slice(2, 10);
+  const clampP = p => Math.max(0, Math.min(100, Math.round((Number(p) || 0) / 25) * 25));
+  function hashColor(s) {
+    let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    const pal = ['#d1495b', '#edae49', '#00798c', '#30638e', '#7b2d8e', '#3b8b5a', '#c96b2c', '#5f6caf'];
+    return pal[h % pal.length];
+  }
+  function hashNum(s) { let h = 0; for (const c of String(s)) h = (h * 33 + c.charCodeAt(0)) | 0; return h; }
+
+  /* ================= 사운드 ================= */
+  let soundOn = true, ac = null;
+  function beep(type) {
+    if (!soundOn) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === 'suspended') ac.resume();
+      const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+      o.connect(g); g.connect(ac.destination);
+      const set = (w, f1, f2, v, d) => { o.type = w; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(f2, t + d); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + d); o.start(t); o.stop(t + d); };
+      if (type === 'grab') set('triangle', 300, 820, 0.25, 0.1);
+      else if (type === 'drop') set('square', 180, 60, 0.25, 0.12);
+      else if (type === 'click') set('square', 420, 380, 0.12, 0.05);
+      else if (type === 'speak') { const f = 420 + Math.random() * 300; set('sine', f, f * 1.1, 0.18, 0.08); }
+      else if (type === 'xp') set('triangle', 660, 1320, 0.15, 0.15);
+      else if (type === 'open') set('square', 300, 600, 0.1, 0.08);
+      else if (type === 'in') set('square', 520, 1040, 0.12, 0.18);
+      else if (type === 'out') set('square', 900, 300, 0.12, 0.2);
+    } catch (e) {}
+  }
+
+  /* ================= 스킨 ================= */
+  const PARTS = {
+    head: [8, 8, 40, 8, 8, 8], body: [20, 20, 20, 36, 8, 12],
+    armR: [44, 20, 44, 36, 4, 12], armL: [36, 52, 52, 52, 4, 12],
+    legR: [4, 20, 4, 36, 4, 12], legL: [20, 52, 4, 52, 4, 12]
+  };
+  const SKIN_RE = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
+  const skinCache = new Map();
+  function defaultSkin(color) {
+    const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+    const x = c.getContext('2d');
+    const f = (col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w, h); };
+    f('#e8b48c', 8, 8, 8, 8); f('#5b3a22', 8, 8, 8, 2); f('#5b3a22', 8, 10, 1, 2); f('#5b3a22', 15, 10, 1, 2);
+    f('#ffffff', 9, 12, 2, 1); f('#ffffff', 13, 12, 2, 1); f('#2a2a5a', 10, 12, 1, 1); f('#2a2a5a', 13, 12, 1, 1); f('#b06a4a', 11, 14, 2, 1);
+    f(color, 20, 20, 8, 12); f('rgba(0,0,0,.18)', 20, 30, 8, 2);
+    f(color, 44, 20, 4, 9); f('#e8b48c', 44, 29, 4, 3); f(color, 36, 52, 4, 9); f('#e8b48c', 36, 61, 4, 3);
+    f('#2f3a5a', 4, 20, 4, 10); f('#3a3a3a', 4, 30, 4, 2); f('#2f3a5a', 20, 52, 4, 10); f('#3a3a3a', 20, 62, 4, 2);
+    return c;
+  }
+  function skinSource(member) {
+    const key = member.skin && SKIN_RE.test(member.skin) && member.skin.length < 60000 ? member.skin : 'default:' + member.color;
+    if (!skinCache.has(key)) {
+      skinCache.set(key, new Promise(res => {
+        if (key.startsWith('default:')) return res({ img: defaultSkin(key.slice(8)), tall: true });
+        const img = new Image();
+        img.onload = () => res({ img, tall: img.naturalHeight >= 64 });
+        img.onerror = () => res({ img: defaultSkin('#777777'), tall: true });
+        img.src = key;
+      }));
+    }
+    return skinCache.get(key);
+  }
+  function paintPart(canvas, src, part, scale) {
+    let [bx, by, ox, oy, w, h] = PARTS[part];
+    if (!src.tall) { if (part === 'armL') { bx = 44; by = 20; } if (part === 'legL') { bx = 4; by = 20; } if (oy >= 32) ox = -1; }
+    canvas.width = w * scale; canvas.height = h * scale;
+    const c = canvas.getContext('2d'); c.imageSmoothingEnabled = false;
+    c.drawImage(src.img, bx, by, w, h, 0, 0, w * scale, h * scale);
+    if (ox >= 0) c.drawImage(src.img, ox, oy, w, h, 0, 0, w * scale, h * scale);
+  }
+  async function paintFace(canvas, member) { paintPart(canvas, await skinSource(member), 'head', 8); }
+  async function paintBody(canvas, member, scale) {
+    const src = await skinSource(member);
+    canvas.width = 16 * scale; canvas.height = 32 * scale;
+    const x = canvas.getContext('2d'); x.imageSmoothingEnabled = false;
+    for (const [p, dx, dy] of [['armR', 0, 8], ['armL', 12, 8], ['legR', 4, 20], ['legL', 8, 20], ['body', 4, 8], ['head', 4, 0]]) {
+      const tmp = document.createElement('canvas'); paintPart(tmp, src, p, scale); x.drawImage(tmp, dx * scale, dy * scale);
+    }
+  }
+  function readSkinFile(file) {
+    return new Promise((res, rej) => {
+      if (!file || file.type !== 'image/png') return rej('PNG 스킨 파일만 올릴 수 있어요.');
+      if (file.size > 200000) return rej('파일이 너무 커요. 64×64 스킨 PNG를 올려 주세요.');
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        if (img.naturalWidth !== 64 || (img.naturalHeight !== 64 && img.naturalHeight !== 32)) return rej('마인크래프트 스킨(64×64 또는 64×32) 파일이 아니에요.');
+        const c = document.createElement('canvas'); c.width = 64; c.height = img.naturalHeight;
+        c.getContext('2d').drawImage(img, 0, 0);
+        const data = c.toDataURL('image/png');
+        if (data.length > 60000) return rej('스킨 파일이 너무 커요.');
+        res(data);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej('이미지를 읽지 못했어요.'); };
+      img.src = url;
+    });
+  }
+
+  /* ==========================================================
+     저장소 어댑터: claude.ai 저장소 또는 Supabase
+     ========================================================== */
+  async function claudeStore() {
+    let db = null, user = null;
+    try { [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]); } catch (e) {}
+    if (!db) return null;
+    const myId = user ? await user.id() : null;
+    const can = user ? await user.can('data.write') : null;
+    const dayCol = uid => db.doc('work/' + uid).collection('days');
+    return {
+      kind: 'claude', label: 'claude.ai 저장소',
+      myId, isOwner: user ? await user.isOwner() : false, canWrite: !!myId && can !== false, needsLogin: false,
+      onMembers: cb => db.collection('members').onSnapshot(s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), () => cb(null)),
+      onContents: cb => db.collection('contents').onSnapshot(s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), () => cb([])),
+      onWeek: (uid, cb) => dayCol(uid).orderBy('date', 'desc').limit(14).onSnapshot(s => cb(s.docs.map(d => d.data())), () => {}),
+      setMember: (id, b) => db.doc('members/' + id).set(b),
+      updateMember: (id, p) => db.doc('members/' + id).update(p),
+      deleteMember: id => db.doc('members/' + id).delete(),
+      getDay: async (uid, date) => { const s = await dayCol(uid).doc(date).get(); return s.exists ? s.data() : null; },
+      setDay: (uid, date, d) => dayCol(uid).doc(date).set(d),
+      addContent: (id, b) => db.doc('contents/' + id).set(b),
+      deleteContent: id => db.doc('contents/' + id).delete()
+    };
+  }
+
+  function loadScript(src) {
+    return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('script')); document.head.append(s); });
+  }
+  async function supabaseStore() {
+    await loadScript(SUPABASE_JS);
+    const sb = window.supabase.createClient(SUPABASE.url, SUPABASE.key);
+    const { data } = await sb.auth.getSession();
+    const session = data && data.session;
+    const myId = session ? session.user.id : null;
+    let isOwner = false;
+    if (myId) { const r = await sb.from('office_admins').select('user_id').eq('user_id', myId); isOwner = !!(r.data && r.data.length); }
+    const chk = r => {
+      if (r.error) throw { code: r.error.code === '42501' || /row-level|permission/i.test(r.error.message) ? 'invalid_argument' : 'unavailable', message: r.error.message };
+      return r.data;
+    };
+    // 바뀐 게 생기면 그 표를 다시 읽어 옴 (작은 팀이라 단순하게)
+    function watch(table, filter, fetcher, cb) {
+      let alive = true;
+      const run = async () => { if (!alive) return; try { cb(await fetcher()); } catch (e) {} };
+      run();
+      const opts = { event: '*', schema: 'public', table }; if (filter) opts.filter = filter;
+      const ch = sb.channel(table + '-' + uidShort()).on('postgres_changes', opts, run).subscribe();
+      const iv = setInterval(run, 60000);
+      return () => { alive = false; sb.removeChannel(ch); clearInterval(iv); };
+    }
+    return {
+      kind: 'supabase', label: 'Supabase', sb,
+      myId, isOwner, canWrite: !!myId, needsLogin: !myId,
+      email: session ? session.user.email : '',
+      onMembers: cb => watch('office_members', null, async () => chk(await sb.from('office_members').select('*')), cb),
+      onContents: cb => watch('office_contents', null, async () => chk(await sb.from('office_contents').select('*')), rows => cb(rows.map(r => ({ id: r.id, name: r.name, order: r.ord })))),
+      onWeek: (uid, cb) => watch('office_days', 'user_id=eq.' + uid, async () => chk(await sb.from('office_days').select('data').eq('user_id', uid).order('date', { ascending: false }).limit(14)), rows => cb(rows.map(r => r.data || {}))),
+      setMember: async (id, b) => chk(await sb.from('office_members').upsert({ id, ...b })),
+      updateMember: async (id, p) => chk(await sb.from('office_members').update(p).eq('id', id)),
+      deleteMember: async id => chk(await sb.from('office_members').delete().eq('id', id)),
+      getDay: async (uid, date) => { const r = chk(await sb.from('office_days').select('data').eq('user_id', uid).eq('date', date)); return r.length ? r[0].data : null; },
+      setDay: async (uid, date, d) => chk(await sb.from('office_days').upsert({ user_id: uid, date, data: d })),
+      addContent: async (id, b) => chk(await sb.from('office_contents').insert({ id, name: b.name, ord: b.order })),
+      deleteContent: async id => chk(await sb.from('office_contents').delete().eq('id', id)),
+      signIn: (email, password) => sb.auth.signInWithPassword({ email, password }),
+      signUp: (email, password) => sb.auth.signUp({ email, password }),
+      signOut: () => sb.auth.signOut()
+    };
+  }
+
+  /* ================= 상태 ================= */
+  const S = {
+    store: null, myId: null, isOwner: false, readOnly: true,
+    members: new Map(), contents: [], loaded: false, slow: false,
+    statusFor: null, week: [], weekFor: null, weekUnsub: null,
+    editing: false, draftSkin: null
+  };
+  const myMember = () => S.myId ? S.members.get(S.myId) : null;
+  const sortedMembers = () => [...S.members.entries()].map(([id, m]) => ({ id, ...m })).sort((a, b) => (a.desk < 0) - (b.desk < 0) || a.desk - b.desk || (a.joined || 0) - (b.joined || 0));
+  const deskOwner = i => { for (const [id, m] of S.members) if (m.desk === i) return { id, ...m }; return null; };
+  function todayOf(m, now = Date.now()) {
+    const today = dateKey(now);
+    const day = m.day && m.day.date === today ? m.day : { date: today, ms: 0, done: 0 };
+    const running = m.status === 'in' && m.since ? now - m.since : 0;
+    return { ms: (day.ms || 0) + running, done: day.done || 0, firstIn: day.firstIn || (m.status === 'in' ? m.since : null), lastOut: day.lastOut || null };
+  }
+  const avgP = list => list.length ? Math.round(list.reduce((a, t) => a + t.p, 0) / list.length) : 0;
+
+  function normMember(id, d) {
+    d = d || {};
+    const tasks = Array.isArray(d.tasks) ? d.tasks.filter(t => t && typeof t.t === 'string').map(t => {
+      const p = t.p == null ? (t.d ? 100 : 0) : clampP(t.p);
+      return { id: clip(t.id, 20) || uidShort(), t: clip(t.t, 60), c: clip(t.c, 30), p, at: Number(t.at) || null, added: Number(t.added) || null };
+    }) : [];
+    const day = d.day && typeof d.day === 'object' ? { date: String(d.day.date || ''), ms: Number(d.day.ms) || 0, done: Number(d.day.done) || 0, firstIn: Number(d.day.firstIn) || null, lastOut: Number(d.day.lastOut) || null } : null;
+    return {
+      name: clip(d.name, 12) || '팀원', role: clip(d.role, 10), quote: clip(d.quote, 40),
+      desk: Number.isInteger(d.desk) && d.desk >= -1 && d.desk <= 7 ? d.desk : -1,
+      skin: typeof d.skin === 'string' ? d.skin : '',
+      color: /^#[0-9a-f]{6}$/i.test(d.color || '') ? d.color : hashColor(id),
+      status: d.status === 'in' || d.status === 'out' ? d.status : 'none',
+      since: Number(d.since) || null, day, tasks, joined: Number(d.joined) || 0
+    };
+  }
+  const plainTasks = m => (m.tasks || []).map(t => ({ id: t.id, t: t.t, c: t.c, p: t.p, at: t.at, added: t.added }));
+
+  /* ================= 쓰기 (한 번에 하나씩) ================= */
+  let writeChain = Promise.resolve();
+  function queueWrite(fn) {
+    const p = writeChain.then(fn);
+    writeChain = p.catch(() => {});
+    return p.catch(err => {
+      const code = err && err.code;
+      if (code === 'invalid_argument') { log('저장 권한이 없어요. 로그인 상태나 공유 권한을 확인해 주세요.'); }
+      else if (code === 'quota_exceeded') log('저장 공간이 가득 찼어요.');
+      else log('저장하지 못했어요. 잠시 뒤 다시 해 주세요.');
+      throw err;
+    });
+  }
+  const saveMember = patch => queueWrite(() => S.store.updateMember(S.myId, patch));
+  function freshDay(m, date) { return m.day && m.day.date === date ? { ...m.day } : { date, ms: 0, done: 0, firstIn: null, lastOut: null }; }
+  async function editDay(date, fn) {
+    await queueWrite(async () => {
+      const cur = await S.store.getDay(S.myId, date);
+      const d = cur ? JSON.parse(JSON.stringify(cur)) : { date, sessions: [], done: [], ms: 0 };
+      d.sessions = Array.isArray(d.sessions) ? d.sessions : []; d.done = Array.isArray(d.done) ? d.done : [];
+      fn(d);
+      d.sessions = d.sessions.slice(-40); d.done = d.done.slice(-100);
+      await S.store.setDay(S.myId, date, d);
+    });
+  }
+
+  async function clockIn() {
+    const m = myMember(); if (!m || m.status === 'in') return;
+    const now = Date.now(), today = dateKey(now);
+    const day = freshDay(m, today); if (!day.firstIn) day.firstIn = now;
+    beep('in');
+    try {
+      await saveMember({ status: 'in', since: now, day });
+      await editDay(today, d => { d.sessions.push({ in: now, out: null }); });
+      const mob = mobs.get(S.myId); if (mob) say(mob, hhmm(now) + ' 출근했습니다!');
+    } catch (e) {}
+  }
+  async function clockOut() {
+    const m = myMember(); if (!m || m.status !== 'in') return;
+    const now = Date.now(), inAt = m.since || now, inDate = dateKey(inAt), dur = Math.max(0, now - inAt);
+    const day = freshDay(m, inDate); if (!day.firstIn) day.firstIn = inAt;
+    day.ms = (day.ms || 0) + dur; day.lastOut = now;
+    beep('out');
+    try {
+      await saveMember({ status: 'out', since: now, day });
+      await editDay(inDate, d => {
+        const open = d.sessions.slice().reverse().find(s => !s.out);
+        if (open) open.out = now; else d.sessions.push({ in: inAt, out: now });
+        d.ms = (d.ms || 0) + dur;
+      });
+      const report = '오늘 ' + fmtDur(day.ms) + ' 근무, 업무 ' + (day.done || 0) + '개 완료!';
+      const mob = mobs.get(S.myId); if (mob) say(mob, '퇴근! ' + report);
+      log(m.name + ' 퇴근 리포트: ' + report);
+    } catch (e) {}
+  }
+
+  async function setProgress(taskId, p) {
+    const m = myMember(); if (!m) return;
+    const now = Date.now(), today = dateKey(now);
+    const tasks = plainTasks(m);
+    const t = tasks.find(x => x.id === taskId); if (!t) return;
+    p = clampP(p); if (t.p === p) return;
+    const was = t.p === 100, wasToday = was && t.at && dateKey(t.at) === today, now100 = p === 100;
+    t.p = p; t.at = now100 ? (was ? t.at : now) : null;
+    const day = freshDay(m, today);
+    if (now100 && !was) { day.done = (day.done || 0) + 1; beep('xp'); }
+    else if (!now100 && wasToday) day.done = Math.max(0, (day.done || 0) - 1);
+    else beep('click');
+    try {
+      await saveMember({ tasks, day });
+      if ((now100 && !was) || (!now100 && wasToday)) await editDay(today, d => {
+        d.done = d.done.filter(x => x.id !== t.id);
+        if (now100) d.done.push({ id: t.id, t: t.t, c: t.c || '' });
+      });
+      if (now100 && !was) { const mob = mobs.get(S.myId); if (mob) say(mob, '“' + t.t + '” 완료!'); }
+    } catch (e) {}
+  }
+  async function addTask(text, contentId) {
+    const m = myMember(); const t = clip(text, 60); if (!m || !t) return;
+    const tasks = plainTasks(m).concat([{ id: uidShort(), t, c: clip(contentId, 30), p: 0, at: null, added: Date.now() }]).slice(-80);
+    beep('click');
+    try { await saveMember({ tasks }); } catch (e) {}
+  }
+  async function removeTask(taskId) {
+    const m = myMember(); if (!m) return;
+    try { await saveMember({ tasks: plainTasks(m).filter(x => x.id !== taskId) }); } catch (e) {}
+  }
+  async function addContent(name) {
+    name = clip(name, 20); if (!name) return;
+    const order = Math.max(0, ...S.contents.map(c => c.order || 0)) + 1;
+    try { await queueWrite(() => S.store.addContent('c' + uidShort(), { name, order })); log('새 컨텐츠: ' + name); beep('xp'); } catch (e) {}
+  }
+
+  /* ================= 알림 ================= */
+  function log(text) {
+    const ul = $('log');
+    ul.prepend(el('li', null, el('time', { text: hhmm(Date.now()) }), el('span', { text })));
+    while (ul.children.length > 40) ul.lastChild.remove();
+  }
+
+  /* ================= 캐릭터 ================= */
+  const mobs = new Map();
+  const office = $('office');
+  function makeMob(id) {
+    const bubble = el('div', { class: 'bubble', hidden: true });
+    const tag = el('div', { class: 'nametag' });
+    const cls = { armR: 'arm-r', armL: 'arm-l', legR: 'leg-r', legL: 'leg-l', body: 'body', head: 'head' };
+    const parts = ['armR', 'armL', 'legR', 'legL', 'body', 'head'].map(p => el('canvas', { class: 'part ' + cls[p], 'data-part': p }));
+    const node = el('div', { class: 'mob idle', role: 'button', tabindex: '0' }, bubble, tag, el('div', { class: 'figure' }, parts));
+    $('mobs').append(node);
+    const mob = { id, el: node, bubble, tag, parts, x: 50, y: 60, anim: null, skinKey: null, timer: null, lastTap: 0 };
+    bindDrag(mob);
+    node.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStatus(id); } });
+    mobs.set(id, mob);
+    return mob;
+  }
+  async function dressMob(mob, member) {
+    const key = (member.skin || '') + '|' + member.color;
+    if (mob.skinKey === key) return;
+    mob.skinKey = key;
+    const src = await skinSource(member);
+    mob.parts.forEach(c => paintPart(c, src, c.dataset.part, 4));
+  }
+  function placeMob(mob) { mob.el.style.left = mob.x + '%'; mob.el.style.top = mob.y + '%'; mob.el.style.zIndex = Math.round(mob.y * 10); }
+  function say(mob, text) {
+    mob.bubble.textContent = text; mob.bubble.hidden = false; beep('speak');
+    clearTimeout(mob.timer); mob.timer = setTimeout(() => { mob.bubble.hidden = true; }, 3600);
+  }
+  function walkTo(mob, tx, ty, done) {
+    cancelWalk(mob);
+    const r = office.getBoundingClientRect();
+    const dist = Math.hypot((tx - mob.x) / 100 * r.width, (ty - mob.y) / 100 * r.height);
+    if (dist < 2) { done && done(); return; }
+    const dur = dist / 90 * 1000, sx = mob.x, sy = mob.y, t0 = performance.now();
+    mob.el.classList.remove('idle'); mob.el.classList.add('walking');
+    mob.el.classList.toggle('facing-left', tx < sx);
+    const step = now => {
+      const k = Math.min(1, (now - t0) / dur);
+      mob.x = sx + (tx - sx) * k; mob.y = sy + (ty - sy) * k; placeMob(mob);
+      if (k < 1) mob.anim = requestAnimationFrame(step);
+      else { mob.anim = null; mob.el.classList.remove('walking'); mob.el.classList.add('idle'); done && done(); }
+    };
+    mob.anim = requestAnimationFrame(step);
+  }
+  function cancelWalk(mob) { if (mob.anim) cancelAnimationFrame(mob.anim); mob.anim = null; mob.el.classList.remove('walking'); }
+  function homeOf(mob) { const m = mob.member; if (m && m.desk >= 0) return seatOf(m.desk); return { x: 10 + (Math.abs(hashNum(mob.id)) % 80), y: 92 }; }
+
+  let dragging = null;
+  function bindDrag(mob) {
+    mob.el.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      cancelWalk(mob);
+      mob.el.setPointerCapture(e.pointerId);
+      dragging = { mob, id: e.pointerId, r: office.getBoundingClientRect(), sx: e.clientX, sy: e.clientY, moved: false };
+      mob.el.classList.remove('idle'); mob.el.classList.add('dragging');
+      mob.el.style.zIndex = 2000;
+    });
+    mob.el.addEventListener('pointermove', e => {
+      if (!dragging || dragging.mob !== mob || e.pointerId !== dragging.id) return;
+      const r = dragging.r;
+      if (!dragging.moved && Math.hypot(e.clientX - dragging.sx, e.clientY - dragging.sy) > 6) {
+        dragging.moved = true; beep('grab');
+        say(mob, pick(mob.member && mob.member.desk === 0 ? LINES.bossGrab : LINES.grab));
+      }
+      if (!dragging.moved) return;
+      let x = (e.clientX - r.left) / r.width * 100, y = (e.clientY - r.top + 60) / r.height * 100;
+      x = Math.max(4, Math.min(96, x)); y = Math.max(26, Math.min(99, y));
+      if (x < mob.x - 0.3) mob.el.classList.add('facing-left'); else if (x > mob.x + 0.3) mob.el.classList.remove('facing-left');
+      mob.x = x; mob.y = y; mob.el.style.left = x + '%'; mob.el.style.top = y + '%';
+    });
+    const end = e => {
+      if (!dragging || dragging.mob !== mob || e.pointerId !== dragging.id) return;
+      const moved = dragging.moved; dragging = null;
+      mob.el.classList.remove('dragging'); mob.el.classList.add('idle');
+      placeMob(mob);
+      if (!moved) {
+        const now = performance.now();
+        if (now - mob.lastTap < 380) { mob.lastTap = 0; mob.bubble.hidden = true; openStatus(mob.id); }
+        else { mob.lastTap = now; say(mob, pick(mob.lines || LINES.poke)); }
+        return;
+      }
+      beep('drop');
+      const r = office.getBoundingClientRect();
+      let best = null, bd = 70;
+      DESKS.forEach((d, i) => { const s = seatOf(i); const dd = Math.hypot((s.x - mob.x) / 100 * r.width, (s.y - mob.y) / 100 * r.height); if (dd < bd) { bd = dd; best = s; } });
+      if (best) { mob.x = best.x; mob.y = best.y; placeMob(mob); }
+      say(mob, pick(LINES.drop));
+    };
+    mob.el.addEventListener('pointerup', end);
+    mob.el.addEventListener('pointercancel', end);
+  }
+
+  function npcBoss() { return { name: '후케이', role: '사장', desk: 0, skin: BOSS_SKIN, color: '#7fb0aa', npc: true, quote: '', status: 'in', tasks: [] }; }
+  function syncMobs() {
+    const want = new Map();
+    for (const m of sortedMembers()) if (m.status === 'in') want.set(m.id, m);
+    if (!deskOwner(0)) want.set(NPC_ID, npcBoss());
+    for (const [id, mob] of mobs) if (!want.has(id)) { cancelWalk(mob); mob.el.remove(); mobs.delete(id); }
+    for (const [id, m] of want) {
+      let mob = mobs.get(id), fresh = false;
+      if (!mob) { mob = makeMob(id); fresh = true; }
+      const prevDesk = mob.member && mob.member.desk;
+      mob.member = m;
+      mob.lines = m.quote ? [m.quote].concat(LINES.poke) : LINES.poke;
+      mob.tag.textContent = '';
+      mob.tag.append(document.createTextNode(m.name || '팀원'));
+      if (m.role) mob.tag.append(' ', el('em', { text: '[' + m.role + ']' }));
+      mob.el.classList.toggle('me', id === S.myId);
+      mob.el.setAttribute('aria-label', (m.name || '팀원') + (m.role ? ', ' + m.role : '') + '. 두 번 누르면 상태창이 열려요');
+      dressMob(mob, m);
+      if (fresh) {
+        const h = homeOf(mob);
+        if (m.npc || !S.loaded) { mob.x = h.x; mob.y = h.y; placeMob(mob); }
+        else { mob.x = 4; mob.y = 96; placeMob(mob); walkTo(mob, h.x, h.y); }
+      } else if (prevDesk !== m.desk) { const h = homeOf(mob); walkTo(mob, h.x, h.y); }
+    }
+  }
+  setInterval(() => {
+    if (document.hidden || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    for (const mob of mobs.values()) {
+      if (mob.anim || (dragging && dragging.mob === mob) || Math.random() < 0.7) continue;
+      if (Math.random() < 0.45) { const h = homeOf(mob); walkTo(mob, h.x, h.y); }
+      else walkTo(mob, 8 + Math.random() * 84, 40 + Math.random() * 56);
+    }
+  }, 4500);
+
+  /* ================= 책상·핫바 ================= */
+  function hotCaption(text) { $('hotbar-caption').textContent = text; }
+  function renderDesks() {
+    const wrap = $('desks'); wrap.innerHTML = '';
+    DESKS.forEach((d, i) => {
+      const o = deskOwner(i), npc = i === 0 && !o, occupied = !!o || npc;
+      const isIn = npc || (o && o.status === 'in');
+      const name = o ? o.name : (npc ? '후케이' : '');
+      const top = el('div', { class: 'desk-top' });
+      if (d.boss) top.append(el('div', { class: 'plant' }), el('div', { class: 'monitor' + (isIn ? '' : ' off') }, el('div', { class: 'screen-text', text: isIn ? 'CEO' : '' })), el('div', { class: 'gold-block' }));
+      else if (!occupied) top.append(el('div', { class: 'paper', text: '모집 중' }));
+      else if (!isIn) top.append(el('div', { class: 'monitor off' }), el('div', { class: 'paper off', text: o.status === 'out' ? '퇴근' : '미출근' }));
+      else top.append(el('div', { class: 'monitor' }, el('div', { class: 'screen-text', text: '>_' })));
+      const front = el('div', { class: 'desk-front' });
+      if (d.boss) front.append(el('span', { class: 'plate', text: '사장 ' + name }));
+      const label = d.boss ? '사장실' + (name ? ' · ' + name : '') : (occupied ? name : '빈자리 ' + d.label);
+      wrap.append(el('button', {
+        type: 'button', class: 'desk ' + (d.boss ? 'boss' : '') + (occupied ? ' taken' : ' empty') + (o && o.id === S.statusFor ? ' selected' : ''),
+        style: 'left:' + d.x + '%;top:' + d.y + '%;z-index:' + Math.round((d.y + 9) * 10),
+        'aria-label': occupied ? label + ' 자리, 상태창 열기' : '빈자리 ' + d.label,
+        onclick: () => { beep('click'); if (o) openStatus(o.id); else if (npc) openStatus(NPC_ID); else hotCaption('빈자리 ' + d.label + ': 새 팀원을 기다리는 중'); }
+      }, top, front, d.boss ? null : el('div', { class: 'chair' }), el('div', { class: 'desk-label', text: label })));
+    });
+  }
+  function renderHotbar() {
+    const bar = $('hotbar'); bar.innerHTML = '';
+    DESKS.forEach((d, i) => {
+      const o = deskOwner(i);
+      const m = o || (i === 0 ? npcBoss() : null);
+      const b = el('button', {
+        type: 'button', class: 'slot' + (o && o.id === S.statusFor ? ' active' : '') + (m && m.status !== 'in' ? ' out' : ''),
+        'aria-label': (i + 1) + '번: ' + (m ? m.name + ' 상태창' : '빈자리'),
+        onclick: () => { beep('click'); if (o) openStatus(o.id); else if (i === 0) openStatus(NPC_ID); else hotCaption('빈자리 ' + d.label + ': 새 팀원을 기다리는 중'); }
+      });
+      if (m) { const c = el('canvas'); paintFace(c, m); b.append(c); if (o && o.status === 'in') b.append(el('span', { class: 'dot' })); }
+      else b.append(el('span', { class: 'q', text: '?' }));
+      b.append(el('span', { class: 'num', text: String(i + 1) }));
+      bar.append(b);
+    });
+  }
+
+  /* ================= 내 자리 ================= */
+  function renderMe() {
+    const box = $('me-box'); box.innerHTML = '';
+    const m = myMember();
+    $('me-aside').textContent = m ? (m.desk === 0 ? '사장실' : m.desk > 0 ? '자리 ' + DESKS[m.desk].label : '자리 없음') : '';
+    const st = S.store;
+    if (!st) {
+      const site = !window.claude && !(SUPABASE.url && SUPABASE.key);
+      box.append(el('div', { class: 'notice info', text: site
+        ? '아직 저장소가 연결되지 않았어요. index.html 위쪽의 SUPABASE 주소와 키를 채우면 팀원들이 함께 쓸 수 있어요. 지금은 둘러보기만 돼요.'
+        : '저장소에 연결하지 못했어요. 로그인 상태를 확인해 주세요. 지금은 둘러보기만 돼요.' }));
+      return;
+    }
+    if (st.needsLogin) { box.append(loginForm()); return; }
+    if (!S.loaded) { box.append(el('div', { class: 'muted', text: S.slow ? '사무실 정보를 아직 불러오지 못했어요. 연결 상태를 확인해 주세요.' : '사무실 정보를 불러오는 중…' })); return; }
+    if (S.readOnly && !m) { box.append(el('div', { class: 'notice', text: '보기 전용이에요. 팀원으로 참여하려면 사무실 주인에게 “참여 가능(Contributor)” 이상 권한을 받아 주세요.' })); return; }
+    if (!m || S.editing) { box.append(joinForm(m)); return; }
+
+    const t = todayOf(m);
+    const face = el('canvas'); paintFace(face, m);
+    const pill = m.status === 'in' ? el('span', { class: 'pill in', text: '근무 중 · ' + stamp(m.since) + '부터' })
+      : m.status === 'out' && t.lastOut ? el('span', { class: 'pill out', text: '퇴근 · ' + hhmm(t.lastOut) }) : el('span', { class: 'pill none', text: '출근 전' });
+    const open = m.tasks.filter(x => x.p < 100);
+    box.append(
+      el('div', { class: 'profile' },
+        el('div', { class: 'face-frame' }, face),
+        el('div', { class: 'who' },
+          el('div', { class: 'who-name' }, m.name, m.role ? el('span', { class: 'rank', text: m.role }) : null),
+          el('div', { class: 'who-sub' }, pill))),
+      el('div', { class: 'clock-row' },
+        el('button', { class: 'mc-btn green', type: 'button', disabled: m.status === 'in' || S.readOnly, onclick: clockIn, text: '출근하기' }),
+        el('button', { class: 'mc-btn red', type: 'button', disabled: m.status !== 'in' || S.readOnly, onclick: clockOut, text: '퇴근하기' })),
+      el('div', { class: 'stats' },
+        el('div', { class: 'stat' }, el('div', { class: 'k', text: '오늘 근무 시간' }), el('div', { class: 'v', id: 'my-ms', text: fmtDur(t.ms) })),
+        el('div', { class: 'stat' }, el('div', { class: 'k', text: '진행 중 업무 · 평균' }), el('div', { class: 'v', text: open.length + '개 · ' + avgP(open) + '%' }))),
+      el('div', { class: 'mini-actions' },
+        el('button', { class: 'mc-btn small green', type: 'button', onclick: () => openStatus(S.myId), text: '내 상태창 열기' }),
+        el('button', { class: 'mc-btn small', type: 'button', onclick: () => { S.editing = true; S.draftSkin = null; renderMe(); }, text: '캐릭터 수정' }),
+        st.kind === 'supabase' ? el('button', { class: 'mc-btn small', type: 'button', onclick: async () => { await st.signOut(); location.reload(); }, text: '로그아웃' }) : null),
+      el('div', { class: 'muted', style: 'margin-top:8px', text: '업무 추가와 진행도는 사무실에서 내 캐릭터를 두 번 누르면 나오는 상태창에서 해요.' })
+    );
+  }
+
+  function loginForm() {
+    const st = S.store;
+    const email = el('input', { class: 'txt', type: 'email', id: 'lg-email', autocomplete: 'email', placeholder: '이메일' });
+    const pw = el('input', { class: 'txt', type: 'password', id: 'lg-pw', autocomplete: 'current-password', placeholder: '비밀번호 (6자 이상)' });
+    const msg = el('div', { class: 'muted', role: 'status', text: '처음이면 이메일과 비밀번호를 적고 “가입하기”를 누르세요.' });
+    const go = async kind => {
+      const e = email.value.trim(), p = pw.value;
+      if (!e || p.length < 6) { msg.textContent = '이메일과 6자 이상 비밀번호를 적어 주세요.'; return; }
+      msg.textContent = kind === 'up' ? '가입하는 중…' : '로그인하는 중…';
+      const r = kind === 'up' ? await st.signUp(e, p) : await st.signIn(e, p);
+      if (r.error) { msg.textContent = /Invalid login/i.test(r.error.message) ? '이메일이나 비밀번호가 맞지 않아요.' : /registered/i.test(r.error.message) ? '이미 가입한 이메일이에요. 로그인을 눌러 주세요.' : '실패했어요: ' + r.error.message; return; }
+      if (kind === 'up' && !(r.data && r.data.session)) { msg.textContent = '가입 확인 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해 주세요.'; return; }
+      location.reload();
+    };
+    const form = el('form', { class: 'login' },
+      el('div', { class: 'notice info', text: '후동부 사무실에 들어가려면 로그인해 주세요.' }),
+      el('label', { class: 'field' }, '이메일', email),
+      el('label', { class: 'field' }, '비밀번호', pw),
+      el('div', { class: 'clock-row' },
+        el('button', { class: 'mc-btn green', type: 'submit', text: '로그인' }),
+        el('button', { class: 'mc-btn', type: 'button', onclick: () => go('up'), text: '가입하기' })),
+      msg);
+    form.addEventListener('submit', e => { e.preventDefault(); go('in'); });
+    return form;
+  }
+
+  function joinForm(m) {
+    const editing = !!m;
+    const taken = new Set([...S.members.entries()].filter(([id]) => id !== S.myId).map(([, x]) => x.desk));
+    const nameI = el('input', { class: 'txt', id: 'jf-name', maxlength: '12', placeholder: '예: 후케이' });
+    const roleI = el('input', { class: 'txt', id: 'jf-role', maxlength: '10', placeholder: '예: 편집 담당' });
+    const quoteI = el('input', { class: 'txt', id: 'jf-quote', maxlength: '40', placeholder: '캐릭터를 누르면 하는 말' });
+    const deskS = el('select', { class: 'txt', id: 'jf-desk' });
+    DESKS.forEach((d, i) => {
+      if (i === 0 && !S.isOwner && !(m && m.desk === 0)) return;
+      if (taken.has(i)) return;
+      deskS.append(el('option', { value: String(i), text: i === 0 ? '사장실' : '자리 ' + d.label }));
+    });
+    deskS.append(el('option', { value: '-1', text: '자리 없이 (서서 근무)' }));
+    if (m) { nameI.value = m.name; roleI.value = m.role; quoteI.value = m.quote; deskS.value = String(m.desk); }
+    else if (S.isOwner && !taken.has(0)) { nameI.value = '후케이'; roleI.value = '사장'; deskS.value = '0'; if (S.draftSkin == null) S.draftSkin = BOSS_SKIN; }
+    const color = m ? m.color : hashColor(S.myId);
+    const preview = el('div', { class: 'skin-preview' });
+    const drawPreview = () => { const c = el('canvas'); paintBody(c, { skin: S.draftSkin != null ? S.draftSkin : (m ? m.skin : ''), color }, 1); preview.innerHTML = ''; preview.append(c); };
+    drawPreview();
+    const msg = el('div', { class: 'muted', role: 'status', text: '스킨을 올리지 않으면 기본 캐릭터로 시작해요.' });
+    const fileI = el('input', { type: 'file', accept: 'image/png', id: 'jf-skin', 'aria-label': '스킨 PNG 올리기' });
+    fileI.addEventListener('change', async () => {
+      try { S.draftSkin = await readSkinFile(fileI.files[0]); msg.textContent = '스킨을 불러왔어요.'; drawPreview(); }
+      catch (err) { msg.textContent = String(err); }
+      fileI.value = '';
+    });
+    const form = el('form', { class: 'join-form' },
+      el('div', { class: 'notice info', text: editing ? '캐릭터 정보를 고쳐요.' : '후동부 사무실에 입사해요! 캐릭터를 만들면 팀원 모두에게 보여요.' }),
+      el('div', { class: 'skin-pick' }, preview,
+        el('div', { style: 'display:flex;flex-direction:column;gap:6px;min-width:0' },
+          el('span', { class: 'mc-btn small file-btn' }, '스킨 PNG 올리기', fileI),
+          el('button', { class: 'mc-btn small', type: 'button', onclick: () => { S.draftSkin = ''; drawPreview(); msg.textContent = '기본 캐릭터로 바꿨어요.'; }, text: '기본 캐릭터로' }),
+          msg)),
+      el('div', { class: 'form-row' }, el('label', { class: 'field' }, '캐릭터 이름', nameI), el('label', { class: 'field' }, '역할', roleI)),
+      el('label', { class: 'field' }, '한마디', quoteI),
+      el('label', { class: 'field' }, '자리', deskS),
+      el('div', { class: 'clock-row', style: 'margin-top:4px' },
+        el('button', { class: 'mc-btn green', type: 'submit', text: editing ? '저장하기' : '입사하기' }),
+        editing ? el('button', { class: 'mc-btn', type: 'button', onclick: () => { S.editing = false; S.draftSkin = null; renderMe(); }, text: '취소' })
+          : S.store && S.store.kind === 'supabase' ? el('button', { class: 'mc-btn', type: 'button', onclick: async () => { await S.store.signOut(); location.reload(); }, text: '로그아웃' }) : el('span')),
+      S.store && S.store.kind === 'supabase' && S.store.email ? el('div', { class: 'muted', text: '로그인한 계정: ' + S.store.email }) : null);
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = clip(nameI.value, 12);
+      if (!name) { msg.textContent = '캐릭터 이름을 적어 주세요.'; nameI.focus(); return; }
+      let desk = parseInt(deskS.value, 10); if (!(desk >= -1 && desk <= 7)) desk = -1;
+      if (desk >= 0) { const o = deskOwner(desk); if (o && o.id !== S.myId) { msg.textContent = '방금 다른 팀원이 그 자리에 앉았어요. 다른 자리를 골라 주세요.'; return; } }
+      const skin = S.draftSkin != null ? S.draftSkin : (m ? m.skin : '');
+      const body = { name, role: clip(roleI.value, 10), quote: clip(quoteI.value, 40), desk, skin, color };
+      try {
+        if (editing) await queueWrite(() => S.store.updateMember(S.myId, body));
+        else await queueWrite(() => S.store.setMember(S.myId, { ...body, status: 'none', since: null, day: null, tasks: [], joined: Date.now() }));
+        beep('xp'); S.editing = false; S.draftSkin = null;
+        log(editing ? name + ' 캐릭터 정보 수정' : name + ' 입사! 환영해요');
+      } catch (err) {}
+    });
+    return form;
+  }
+
+  /* ================= 출퇴근 현황 ================= */
+  function renderBoard() {
+    const box = $('board-box'); box.innerHTML = '';
+    $('today-label').textContent = longDate(Date.now());
+    const list = sortedMembers();
+    if (!list.length) { box.append(el('div', { class: 'muted', text: S.loaded ? '아직 입사한 팀원이 없어요. “내 자리”에서 첫 캐릭터를 만들어 보세요.' : '불러오는 중…' })); return; }
+    const now = Date.now();
+    const rows = list.slice().sort((a, b) => (b.status === 'in') - (a.status === 'in') || todayOf(b, now).ms - todayOf(a, now).ms);
+    const tb = el('tbody');
+    for (const m of rows) {
+      const t = todayOf(m, now);
+      const face = el('canvas'); paintFace(face, m);
+      const st = m.status === 'in' ? el('span', { class: 'pill in', text: stamp(m.since) + ' 출근' })
+        : t.lastOut ? el('span', { class: 'pill out', text: hhmm(t.lastOut) + ' 퇴근' }) : el('span', { class: 'pill none', text: '미출근' });
+      tb.append(el('tr', { class: m.id === S.statusFor ? 'sel' : '', tabindex: '0', onclick: () => openStatus(m.id), onkeydown: e => { if (e.key === 'Enter') openStatus(m.id); } },
+        el('td', null, el('div', { class: 'nm' }, face, el('span', { text: m.name + (m.id === S.myId ? ' (나)' : '') }))),
+        el('td', null, st),
+        el('td', { class: 'num', text: fmtShort(t.ms) }),
+        el('td', { class: 'num', text: t.done + '개' })));
+    }
+    box.append(el('div', { class: 'board-wrap' }, el('table', { class: 'board' },
+      el('thead', null, el('tr', null, el('th', { text: '팀원' }), el('th', { text: '출퇴근' }), el('th', { class: 'num', text: '근무' }), el('th', { class: 'num', text: '완료' }))), tb)),
+      el('div', { class: 'muted', style: 'margin-top:8px', text: '이름을 누르면 상태창이 열려요.' }));
+  }
+
+  /* ================= 컨텐츠 요약 ================= */
+  function contentStats(c) {
+    const all = sortedMembers().flatMap(m => m.tasks.filter(t => t.c === c.id).map(t => ({ ...t, who: m })));
+    return { tasks: all, pct: avgP(all), done: all.filter(t => t.p === 100).length, people: new Set(all.map(t => t.who.id)).size };
+  }
+  function renderContents() {
+    const box = $('content-box'); box.innerHTML = '';
+    $('content-count').textContent = S.contents.length + '개';
+    if (!S.contents.length) { box.append(el('div', { class: 'muted', text: S.loaded ? '등록된 컨텐츠가 없어요. 상태창에서 추가할 수 있어요.' : '불러오는 중…' })); return; }
+    const wrap = el('div', { class: 'c-sum' });
+    for (const c of S.contents) {
+      const s = contentStats(c);
+      wrap.append(el('div', { class: 'c-sum-row' },
+        el('div', { class: 'top' }, el('span', { text: c.name }), el('span', { text: s.pct + '% · 업무 ' + s.tasks.length + '개 · ' + s.people + '명' })),
+        el('div', { class: 'xp-bar' }, el('div', { class: 'xp-fill', style: 'width:' + s.pct + '%' }))));
+    }
+    box.append(wrap, el('div', { class: 'muted', style: 'margin-top:10px', text: '진행도는 각 업무 진행도의 평균이에요. 컨텐츠 추가와 업무 진행도는 캐릭터 상태창에서 바꿔요.' }));
+  }
+
+  /* ================= 상태창 ================= */
+  let lastFocus = null;
+  function openStatus(id) {
+    if (id !== NPC_ID && !S.members.has(id)) return;
+    if (S.statusFor !== id) lastFocus = document.activeElement;
+    S.statusFor = id;
+    beep('open');
+    if (id !== NPC_ID) subscribeWeek(id);
+    $('modal-back').hidden = false;
+    renderStatus();
+    renderDesks(); renderHotbar(); renderBoard();
+    const close = $('modal').querySelector('.close'); if (close) close.focus();
+  }
+  function closeStatus() {
+    S.statusFor = null;
+    $('modal-back').hidden = true;
+    if (S.weekUnsub) { S.weekUnsub(); S.weekUnsub = null; } S.weekFor = null; S.week = [];
+    renderDesks(); renderHotbar(); renderBoard();
+    if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+  }
+  $('modal-back').addEventListener('click', e => { if (e.target === e.currentTarget) closeStatus(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('modal-back').hidden) closeStatus(); });
+
+  function subscribeWeek(id) {
+    if (S.weekFor === id) return;
+    if (S.weekUnsub) { S.weekUnsub(); S.weekUnsub = null; }
+    S.weekFor = id; S.week = [];
+    if (!S.store) return;
+    try { S.weekUnsub = S.store.onWeek(id, list => { S.week = list || []; if (S.statusFor === id) renderStatus(); }); } catch (e) {}
+  }
+
+  function segBar(t, editable) {
+    const seg = el('div', { class: 'seg', role: editable ? 'group' : 'img', 'aria-label': t.t + ' 진행도 ' + t.p + '%' });
+    for (let k = 1; k <= 4; k++) {
+      const on = t.p >= k * 25;
+      if (editable) seg.append(el('button', { type: 'button', class: on ? 'on' : '', 'aria-label': (k * 25) + '%로 설정', title: (k * 25) + '%', onclick: () => setProgress(t.id, t.p === k * 25 ? (k - 1) * 25 : k * 25) }));
+      else seg.append(el('span', { class: on ? 'on' : '' }));
+    }
+    return seg;
+  }
+
+  function renderStatus() {
+    const modal = $('modal');
+    const id = S.statusFor; if (!id) return;
+    const isNpc = id === NPC_ID;
+    const m = isNpc ? npcBoss() : S.members.get(id);
+    if (!m) { closeStatus(); return; }
+    const mine = !isNpc && id === S.myId && !S.readOnly;
+    const now = Date.now();
+    const t = isNpc ? { ms: 0, done: 0 } : todayOf(m, now);
+    const body = el('canvas'); paintBody(body, m, 4);
+    const statusText = isNpc ? '아직 입사 등록 전' : m.status === 'in' ? '근무 중 · ' + stamp(m.since) + ' 출근' : m.status === 'out' ? '퇴근 · ' + stamp(m.since) : '출근 전';
+    const kids = [
+      el('button', { class: 'mc-btn close', type: 'button', 'aria-label': '상태창 닫기', onclick: closeStatus, text: 'X' }),
+      el('div', { class: 'st-head' },
+        el('div', { class: 'st-avatar' }, body),
+        el('div', { style: 'min-width:0' },
+          el('h2', { id: 'st-name', text: m.name + (mine ? ' (나)' : '') }),
+          m.role ? el('span', { class: 'st-role', text: m.role }) : null,
+          m.quote ? el('div', { class: 'st-quote', text: '“' + m.quote + '”' }) : null,
+          el('div', { class: 'st-now' }, longDate(now) + ' ', el('b', { id: 'st-clock', text: hhmmss(now) })),
+          el('div', { class: 'st-stats' },
+            el('div', { class: 'st-stat' }, el('div', { class: 'k', text: '상태' }), el('div', { class: 'v', style: 'font-size:16px', text: statusText })),
+            el('div', { class: 'st-stat' }, el('div', { class: 'k', text: '오늘 근무' }), el('div', { class: 'v', id: 'st-ms', text: fmtDur(t.ms) })),
+            el('div', { class: 'st-stat' }, el('div', { class: 'k', text: '오늘 완료 업무' }), el('div', { class: 'v', text: t.done + '개' })))))
+    ];
+    if (isNpc) {
+      kids.push(el('div', { class: 'notice info', text: S.isOwner ? '사장님! “내 자리”에서 입사하기를 누르면 이 자리가 진짜 내 자리가 돼요. 이름과 스킨은 미리 채워져 있어요.' : '사장님이 아직 입사 등록을 하지 않았어요.' }));
+    } else {
+      // 업무 진행도
+      const tasks = m.tasks.slice().sort((a, b) => (a.p === 100) - (b.p === 100) || (b.added || 0) - (a.added || 0));
+      const sec = el('div', { class: 'st-sec' },
+        el('div', { class: 'st-sec-head' }, el('h3', { text: '업무 진행도' }), el('span', { text: tasks.filter(x => x.p < 100).length + '개 진행 중 · 평균 ' + avgP(tasks.filter(x => x.p < 100)) + '%' })));
+      if (!tasks.length) sec.append(el('div', { class: 'st-empty', text: mine ? '아직 업무가 없어요. 아래에서 추가해 보세요.' : '등록된 업무가 없어요.' }));
+      for (const tk of tasks) {
+        const c = S.contents.find(x => x.id === tk.c);
+        sec.append(el('div', { class: 'ptask' + (tk.p === 100 ? ' done' : '') },
+          el('div', { class: 'pt-name', text: tk.t }),
+          el('div', { class: 'pt-meta' },
+            el('span', { class: 'tag' + (c ? '' : ' none'), text: c ? c.name : '기타' }),
+            el('span', { class: 'pt-pct', text: tk.p + '%' })),
+          segBar(tk, mine),
+          el('div', { class: 'seg-zero' },
+            el('span', { text: tk.p === 100 && tk.at ? stamp(tk.at) + ' 완료' : tk.added ? stamp(tk.added) + ' 추가' : '' }),
+            mine ? el('span', null,
+              tk.p > 0 ? el('button', { type: 'button', onclick: () => setProgress(tk.id, 0), text: '0%로' }) : null, ' ',
+              el('button', { type: 'button', onclick: () => removeTask(tk.id), text: '지우기' })) : null)));
+      }
+      if (mine) {
+        const inp = el('input', { class: 'txt', type: 'text', maxlength: '60', id: 'st-add', placeholder: '새 업무 (예: 맵 준비)', 'aria-label': '새 업무' });
+        const sel = el('select', { class: 'txt', id: 'st-add-c', 'aria-label': '컨텐츠 선택' }, el('option', { value: '', text: '컨텐츠: 기타 업무' }), S.contents.map(c => el('option', { value: c.id, text: '컨텐츠: ' + c.name })));
+        const f = el('form', { class: 'add-row' }, sel, inp, el('button', { class: 'mc-btn green', type: 'submit', text: '업무 추가' }));
+        f.addEventListener('submit', e => { e.preventDefault(); if (!clip(inp.value, 60)) return; addTask(inp.value, sel.value); inp.value = ''; });
+        sec.append(f, el('div', { class: 'st-empty', style: 'margin-top:6px;font-size:13px', text: '칸을 누르면 25%씩 진행도가 바뀌어요. 네 칸을 다 채우면 완료로 기록돼요.' }));
+      }
+      kids.push(sec);
+    }
+
+    // 컨텐츠 진행도 + 추가
+    const csec = el('div', { class: 'st-sec' },
+      el('div', { class: 'st-sec-head' }, el('h3', { text: '진행 중인 컨텐츠' }), el('span', { text: S.contents.length + '개' })));
+    if (!S.contents.length) csec.append(el('div', { class: 'st-empty', text: '아직 컨텐츠가 없어요.' }));
+    for (const c of S.contents) {
+      const s = contentStats(c);
+      const his = isNpc ? [] : s.tasks.filter(x => x.who.id === id);
+      const row = el('div', { class: 'cprog' },
+        el('div', { class: 'cp-name', text: c.name }),
+        el('div', { class: 'cp-num', text: s.pct + '% · 완료 ' + s.done + '/' + s.tasks.length }),
+        el('div', { class: 'xp-bar' }, el('div', { class: 'xp-fill', style: 'width:' + s.pct + '%' })),
+        isNpc ? null : el('div', { class: 'cp-mine', text: his.length ? m.name + ' 담당 ' + his.length + '개 · 평균 ' + avgP(his) + '%' : m.name + '의 업무 없음' }));
+      if (S.isOwner && mine) row.append(el('button', {
+        class: 'mc-btn small red del-c', type: 'button', text: '컨텐츠 끝내기',
+        onclick: e => {
+          const b = e.currentTarget;
+          if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더 누르면 목록에서 빠져요'; return; }
+          queueWrite(() => S.store.deleteContent(c.id)).then(() => log('컨텐츠 종료: ' + c.name)).catch(() => {});
+        }
+      }));
+      csec.append(row);
+    }
+    if (mine) {
+      const ci = el('input', { class: 'txt', type: 'text', maxlength: '20', id: 'st-new-c', placeholder: '새 컨텐츠 이름', 'aria-label': '새 컨텐츠 이름' });
+      const cf = el('form', { class: 'add-row' }, ci, el('button', { class: 'mc-btn green', type: 'submit', text: '컨텐츠 추가' }));
+      cf.addEventListener('submit', e => { e.preventDefault(); addContent(ci.value); ci.value = ''; });
+      csec.append(cf);
+    }
+    kids.push(csec);
+
+    // 최근 7일
+    if (!isNpc) {
+      const byDate = new Map(S.week.filter(d => d && d.date).map(d => [d.date, d]));
+      const days = [];
+      for (let k = 6; k >= 0; k--) {
+        const dt = new Date(now); dt.setDate(dt.getDate() - k);
+        const key = dateKey(dt.getTime()), d = byDate.get(key);
+        let ms = d ? Number(d.ms) || 0 : 0, done = d && Array.isArray(d.done) ? d.done.length : 0;
+        if (k === 0) { ms = Math.max(ms, t.ms); done = Math.max(done, t.done); }
+        days.push({ ms, done, today: k === 0, label: WEEKDAY[dt.getDay()], md: (dt.getMonth() + 1) + '/' + dt.getDate() });
+      }
+      const max = Math.max(4 * 3600000, ...days.map(d => d.ms));
+      const total = days.reduce((a, d) => a + d.ms, 0), totalDone = days.reduce((a, d) => a + d.done, 0);
+      const week = el('div', { class: 'week', role: 'img', 'aria-label': '최근 7일 근무: ' + days.map(d => d.md + ' ' + fmtShort(d.ms)).join(', ') });
+      for (const d of days) week.append(el('div', { class: 'wk' },
+        el('span', { class: 'h', text: d.ms ? fmtShort(d.ms) : '-' }),
+        el('div', { class: 'bar-box' }, el('div', { class: 'bar' + (d.today ? ' today' : ''), style: 'height:' + Math.round(d.ms / max * 100) + '%' })),
+        el('span', { class: 'n', text: d.done ? '완료 ' + d.done : '' }),
+        el('span', { class: 'd', text: d.md + ' ' + d.label })));
+      kids.push(el('div', { class: 'st-sec' },
+        el('div', { class: 'st-sec-head' }, el('h3', { text: '최근 7일 근무' }), el('span', { text: fmtDur(total) + ' · 업무 ' + totalDone + '개 완료' })),
+        week, el('div', { class: 'legend', text: '막대는 하루 근무 시간이에요. 노란 막대가 오늘이에요.' })));
+      if (S.isOwner && !mine && S.store) kids.push(el('div', { class: 'st-actions' }, el('button', {
+        class: 'mc-btn small red', type: 'button', text: '이 팀원 내보내기',
+        onclick: e => {
+          const b = e.currentTarget;
+          if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더 누르면 내보내요'; return; }
+          queueWrite(() => S.store.deleteMember(id)).then(() => { log(m.name + ' 팀원을 내보냈어요'); closeStatus(); }).catch(() => {});
+        }
+      })));
+    }
+    modal.replaceChildren(...kids.filter(Boolean));
+  }
+
+  /* ================= 전체 렌더 ================= */
+  function preserve(fn) {
+    const vals = {};
+    document.querySelectorAll('.side input[id], .side select[id], .modal input[id], .modal select[id]').forEach(i => { if (i.type !== 'file' && i.type !== 'checkbox') vals[i.id] = i.value; });
+    const act = document.activeElement && document.activeElement.id;
+    fn();
+    for (const [id, v] of Object.entries(vals)) { const e = document.getElementById(id); if (e && e.type !== 'file') e.value = v; }
+    if (act) { const e = document.getElementById(act); if (e && e !== document.activeElement) e.focus(); }
+  }
+  function renderHeadcount() {
+    const list = sortedMembers(), inN = list.filter(m => m.status === 'in').length;
+    const hc = $('headcount'); hc.textContent = '';
+    hc.append('근무 중 ', el('b', { text: String(inN) }), '명 · 팀원 ' + list.length + '명');
+  }
+  function renderAll() {
+    preserve(() => {
+      syncMobs(); renderDesks(); renderHotbar(); renderMe(); renderBoard(); renderContents(); renderHeadcount();
+      if (S.statusFor) renderStatus();
+    });
+  }
+
+  // 날짜·시계 (화면 표시만, 저장 없음)
+  function tick() {
+    const now = Date.now();
+    $('now-date').textContent = longDate(now);
+    $('now-time').textContent = hhmmss(now);
+    $('board-date').textContent = (new Date(now).getMonth() + 1) + '.' + new Date(now).getDate() + ' ' + WEEKDAY[new Date(now).getDay()];
+    $('board-time').textContent = hhmm(now);
+    const m = myMember(); const v = $('my-ms'); if (m && v) v.textContent = fmtDur(todayOf(m, now).ms);
+    const sc = $('st-clock'); if (sc) sc.textContent = hhmmss(now);
+    const sm = $('st-ms'); const sm2 = S.statusFor && S.members.get(S.statusFor); if (sm && sm2) sm.textContent = fmtDur(todayOf(sm2, now).ms);
+  }
+  tick(); setInterval(tick, 1000);
+  let lastDay = dateKey();
+  setInterval(() => { if (document.hidden) return; if (dateKey() !== lastDay) { lastDay = dateKey(); renderAll(); } else renderBoard(); }, 60000);
+
+  /* ================= 버튼 ================= */
+  $('btn-sound').addEventListener('click', e => {
+    soundOn = !soundOn;
+    e.currentTarget.setAttribute('aria-pressed', String(soundOn));
+    e.currentTarget.textContent = soundOn ? '사운드 켜짐' : '사운드 꺼짐';
+    beep('click');
+  });
+  $('btn-meeting').addEventListener('click', () => {
+    const list = [...mobs.values()];
+    list.forEach((mob, i) => {
+      const a = (i / Math.max(1, list.length)) * Math.PI * 2;
+      walkTo(mob, 50 + Math.cos(a) * 12, 66 + Math.sin(a) * 8, () => { if (i === 0) say(mob, pick(LINES.meeting)); });
+    });
+    log('회의 소집: 근무 중 ' + list.length + '명 집합 (내 화면에서만)');
+  });
+  window.addEventListener('keydown', e => {
+    if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !$('modal-back').hidden) return;
+    const n = parseInt(e.key, 10);
+    if (n >= 1 && n <= 8) { const o = deskOwner(n - 1); if (o) openStatus(o.id); }
+  });
+
+  /* ================= 연결 ================= */
+  async function connect() {
+    hotCaption('캐릭터를 끌어 옮기고, 두 번 누르면 상태창이 열려요.');
+    renderAll();
+    log('후동부 사무실에 들어왔어요');
+    let store = null;
+    try {
+      if (window.claude && typeof window.claude.use === 'function') store = await claudeStore();
+      else if (SUPABASE.url && SUPABASE.key) store = await supabaseStore();
+    } catch (e) { log('저장소에 연결하지 못했어요.'); }
+    S.store = store;
+    if (!store) { S.loaded = true; renderAll(); return; }
+    $('backend').textContent = store.label;
+    S.myId = store.myId; S.isOwner = store.isOwner; S.readOnly = !store.canWrite;
+    if (store.needsLogin) { S.loaded = true; }
+
+    const slowTimer = setTimeout(() => { if (!S.loaded) { S.slow = true; renderAll(); } }, 10000);
+    let gotM = false, gotC = false;
+    const ready = () => { if (gotM && gotC && !S.loaded) { S.loaded = true; S.slow = false; clearTimeout(slowTimer); } };
+
+    store.onMembers(list => {
+      if (!list) { gotM = true; ready(); renderAll(); return; }
+      const next = new Map();
+      for (const d of list) next.set(d.id, normMember(d.id, d));
+      if (S.loaded && gotM) {
+        for (const [id, d] of next) {
+          const prev = S.members.get(id);
+          if (!prev) log(d.name + ' 입사!');
+          else if (prev.status !== d.status) {
+            if (d.status === 'in') log(d.name + ' 출근 (' + hhmm(d.since) + ')');
+            else if (d.status === 'out') { const t = todayOf(d); log(d.name + ' 퇴근 · 오늘 ' + fmtDur(t.ms) + ', 업무 ' + t.done + '개'); }
+          }
+        }
+      }
+      S.members = next;
+      if (S.statusFor && S.statusFor !== NPC_ID && !S.members.has(S.statusFor)) closeStatus();
+      gotM = true; ready(); renderAll();
+    });
+    store.onContents(list => {
+      S.contents = (list || []).map(d => ({ id: String(d.id), name: clip(d.name, 20) || '컨텐츠', order: Number(d.order) || 0 })).sort((a, b) => a.order - b.order);
+      gotC = true; ready(); renderAll();
+    });
+  }
+  connect();
+})();
+</script>
