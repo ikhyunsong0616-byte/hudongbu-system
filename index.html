@@ -456,6 +456,12 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
 .c-sum-row .top { display: flex; justify-content: space-between; gap: 8px; font-size: 16px; }
 .c-sum-row .top span:last-child { color: var(--ink-mute); font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
+/* 입사 신청 */
+.apv { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; background: var(--row); border: 2px solid #000; padding: 8px 10px; margin-bottom: 6px; }
+.apv .nm { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1 1 180px; }
+.apv .nm canvas { width: 32px; height: 32px; border: 2px solid #000; flex: none; }
+.apv-name { font-size: 17px; overflow-wrap: anywhere; }
+.apv-btns { display: flex; gap: 6px; }
 /* 로그인 */
 .login { display: flex; flex-direction: column; gap: 10px; }
 .login .clock-row { margin-top: 0; }
@@ -493,6 +499,11 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
       <section class="panel" aria-label="내 자리">
         <div class="section-head"><span class="label">내 자리</span><span class="aside" id="me-aside"></span></div>
         <div id="me-box"></div>
+      </section>
+
+      <section class="panel" aria-label="입사 신청" id="approve-sec" hidden>
+        <div class="section-head"><span class="label">입사 신청</span><span class="aside" id="approve-count"></span></div>
+        <div id="approve-box"></div>
       </section>
 
       <section class="panel" aria-label="오늘 출퇴근 현황">
@@ -534,12 +545,12 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
 <script>
 (() => {
   /* ==========================================================
-     웹사이트(GitHub Pages)로 쓸 때만 아래 두 값을 채우세요.
-     claude.ai에서 열면 이 값은 쓰지 않아요.
+     웹사이트로 쓸 때 Supabase 주소와 키는 같은 폴더의 config.js에 적으세요.
+     (여기 비워 두면 config.js를 읽어요. claude.ai에서 열면 둘 다 쓰지 않아요.)
      ========================================================== */
   const SUPABASE = {
-    url: 'https://fnpfnfghkipgjobpgmma.supabase.co',   // 예: https://xxxx.supabase.co
-    key: 'sb_publishable_wHJ5sp8jQ6MLiS5K59jsyg_eQCQQQ6p'    // Supabase의 publishable 키 (sb_publishable_... 또는 anon 키). secret 키는 절대 넣지 마세요!
+    url: '',   // 예: https://xxxx.supabase.co
+    key: ''    // Supabase의 publishable 키 (sb_publishable_... 또는 anon 키). secret 키는 절대 넣지 마세요!
   };
   const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4';
 
@@ -716,9 +727,9 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
   function loadScript(src) {
     return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('script')); document.head.append(s); });
   }
-  async function supabaseStore() {
+  async function supabaseStore(cfg) {
     await loadScript(SUPABASE_JS);
-    const sb = window.supabase.createClient(SUPABASE.url, SUPABASE.key);
+    const sb = window.supabase.createClient(cfg.url, cfg.key);
     const { data } = await sb.auth.getSession();
     const session = data && data.session;
     const myId = session ? session.user.id : null;
@@ -767,7 +778,10 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
   };
   const myMember = () => S.myId ? S.members.get(S.myId) : null;
   const sortedMembers = () => [...S.members.entries()].map(([id, m]) => ({ id, ...m })).sort((a, b) => (a.desk < 0) - (b.desk < 0) || a.desk - b.desk || (a.joined || 0) - (b.joined || 0));
-  const deskOwner = i => { for (const [id, m] of S.members) if (m.desk === i) return { id, ...m }; return null; };
+  const deskOwner = i => { for (const [id, m] of S.members) if (m.approved && m.desk === i) return { id, ...m }; return null; };
+  const crew = () => sortedMembers().filter(m => m.approved);           // 승인된 동부원
+  const pendingList = () => sortedMembers().filter(m => !m.approved);   // 입사 신청 (사장 화면에서만 보임)
+  const usesApproval = () => S.store && S.store.kind === 'supabase';
   function todayOf(m, now = Date.now()) {
     const today = dateKey(now);
     const day = m.day && m.day.date === today ? m.day : { date: today, ms: 0, done: 0 };
@@ -789,7 +803,8 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
       skin: typeof d.skin === 'string' ? d.skin : '',
       color: /^#[0-9a-f]{6}$/i.test(d.color || '') ? d.color : hashColor(id),
       status: d.status === 'in' || d.status === 'out' ? d.status : 'none',
-      since: Number(d.since) || null, day, tasks, joined: Number(d.joined) || 0
+      since: Number(d.since) || null, day, tasks, joined: Number(d.joined) || 0,
+      approved: d.approved !== false
     };
   }
   const plainTasks = m => (m.tasks || []).map(t => ({ id: t.id, t: t.t, c: t.c, p: t.p, at: t.at, added: t.added }));
@@ -989,7 +1004,7 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
   function npcBoss() { return { name: '후케이', role: '사장', desk: 0, skin: BOSS_SKIN, color: '#7fb0aa', npc: true, quote: '', status: 'in', tasks: [] }; }
   function syncMobs() {
     const want = new Map();
-    for (const m of sortedMembers()) if (m.status === 'in') want.set(m.id, m);
+    for (const m of crew()) if (m.status === 'in') want.set(m.id, m);
     if (!deskOwner(0)) want.set(NPC_ID, npcBoss());
     for (const [id, mob] of mobs) if (!want.has(id)) { cancelWalk(mob); mob.el.remove(); mobs.delete(id); }
     for (const [id, m] of want) {
@@ -1068,9 +1083,9 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
     $('me-aside').textContent = m ? (m.desk === 0 ? '사장실' : m.desk > 0 ? '자리 ' + DESKS[m.desk].label : '자리 없음') : '';
     const st = S.store;
     if (!st) {
-      const site = !window.claude && !(SUPABASE.url && SUPABASE.key);
+      const site = !window.claude && !S.cfgFound;
       box.append(el('div', { class: 'notice info', text: site
-        ? '아직 저장소가 연결되지 않았어요. index.html 위쪽의 SUPABASE 주소와 키를 채우면 팀원들이 함께 쓸 수 있어요. 지금은 둘러보기만 돼요.'
+        ? '아직 저장소가 연결되지 않았어요. index.html 옆에 Supabase 주소와 키를 적은 config.js가 있어야 해요. 지금은 둘러보기만 돼요.'
         : '저장소에 연결하지 못했어요. 로그인 상태를 확인해 주세요. 지금은 둘러보기만 돼요.' }));
       return;
     }
@@ -1078,6 +1093,7 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
     if (!S.loaded) { box.append(el('div', { class: 'muted', text: S.slow ? '사무실 정보를 아직 불러오지 못했어요. 연결 상태를 확인해 주세요.' : '사무실 정보를 불러오는 중…' })); return; }
     if (S.readOnly && !m) { box.append(el('div', { class: 'notice', text: '보기 전용이에요. 팀원으로 참여하려면 사무실 주인에게 “참여 가능(Contributor)” 이상 권한을 받아 주세요.' })); return; }
     if (!m || S.editing) { box.append(joinForm(m)); return; }
+    if (!m.approved) { box.append(pendingCard(m)); return; }
 
     const t = todayOf(m);
     const face = el('canvas'); paintFace(face, m);
@@ -1102,6 +1118,57 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
         st.kind === 'supabase' ? el('button', { class: 'mc-btn small', type: 'button', onclick: async () => { await st.signOut(); location.reload(); }, text: '로그아웃' }) : null),
       el('div', { class: 'muted', style: 'margin-top:8px', text: '업무 추가와 진행도는 사무실에서 내 캐릭터를 두 번 누르면 나오는 상태창에서 해요.' })
     );
+  }
+
+  function pendingCard(m) {
+    const face = el('canvas'); paintFace(face, m);
+    const st = S.store;
+    return el('div', null,
+      el('div', { class: 'profile' },
+        el('div', { class: 'face-frame' }, face),
+        el('div', { class: 'who' },
+          el('div', { class: 'who-name' }, m.name, m.role ? el('span', { class: 'rank', text: m.role }) : null),
+          el('div', { class: 'who-sub' }, el('span', { class: 'pill none', text: '입사 승인 대기 중' })))),
+      el('div', { class: 'notice', style: 'margin-top:12px', text: (m.joined ? stamp(m.joined) + '에 ' : '') + '입사 신청을 보냈어요. 사장님이 승인하면 이 화면이 자동으로 바뀌고 사무실에 들어갈 수 있어요.' }),
+      el('div', { class: 'mini-actions' },
+        el('button', { class: 'mc-btn small', type: 'button', onclick: () => { S.editing = true; S.draftSkin = null; renderMe(); }, text: '신청 내용 수정' }),
+        el('button', { class: 'mc-btn small red', type: 'button', text: '신청 취소', onclick: e => {
+          const b = e.currentTarget;
+          if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더 누르면 취소돼요'; return; }
+          queueWrite(() => st.deleteMember(S.myId)).then(() => log('입사 신청을 취소했어요')).catch(() => {});
+        } }),
+        st && st.kind === 'supabase' ? el('button', { class: 'mc-btn small', type: 'button', onclick: async () => { await st.signOut(); location.reload(); }, text: '로그아웃' }) : null));
+  }
+
+  /* 사장 화면: 입사 신청 승인 */
+  function renderApprovals() {
+    const sec = $('approve-sec');
+    const show = usesApproval() && S.isOwner;
+    sec.hidden = !show;
+    if (!show) return;
+    const box = $('approve-box'); box.innerHTML = '';
+    const list = pendingList();
+    $('approve-count').textContent = list.length ? list.length + '명 대기' : '';
+    if (!list.length) { box.append(el('div', { class: 'muted', text: '새 입사 신청이 없어요. 동부원이 사이트에서 가입하고 신청하면 여기에 나와요.' })); return; }
+    for (const m of list) {
+      const face = el('canvas'); paintFace(face, m);
+      const want = m.desk === 0 ? '사장실' : m.desk > 0 ? '자리 ' + DESKS[m.desk].label : '자리 없음';
+      const clash = m.desk >= 0 && deskOwner(m.desk);
+      box.append(el('div', { class: 'apv' },
+        el('div', { class: 'nm' }, face, el('div', { style: 'min-width:0' },
+          el('div', { class: 'apv-name', text: m.name + (m.role ? ' · ' + m.role : '') }),
+          el('div', { class: 'muted', text: '희망 ' + want + (clash ? ' (이미 사용 중 → 자리 없이 승인)' : '') + (m.joined ? ' · ' + stamp(m.joined) + ' 신청' : '') }))),
+        el('div', { class: 'apv-btns' },
+          el('button', { class: 'mc-btn small green', type: 'button', text: '승인', onclick: () => {
+            const patch = { approved: true }; if (clash) patch.desk = -1;
+            queueWrite(() => S.store.updateMember(m.id, patch)).then(() => { beep('xp'); log(m.name + ' 입사 승인!'); }).catch(() => {});
+          } }),
+          el('button', { class: 'mc-btn small red', type: 'button', text: '거절', onclick: e => {
+            const b = e.currentTarget;
+            if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더'; return; }
+            queueWrite(() => S.store.deleteMember(m.id)).then(() => log(m.name + ' 입사 신청 거절')).catch(() => {});
+          } }))));
+    }
   }
 
   function loginForm() {
@@ -1157,7 +1224,7 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
       fileI.value = '';
     });
     const form = el('form', { class: 'join-form' },
-      el('div', { class: 'notice info', text: editing ? '캐릭터 정보를 고쳐요.' : '후동부 사무실에 입사해요! 캐릭터를 만들면 팀원 모두에게 보여요.' }),
+      el('div', { class: 'notice info', text: editing ? '캐릭터 정보를 고쳐요.' : usesApproval() && !S.isOwner ? '캐릭터를 만들어 입사 신청을 보내요. 사장님이 승인하면 사무실에 들어갈 수 있어요.' : '후동부 사무실에 입사해요! 캐릭터를 만들면 팀원 모두에게 보여요.' }),
       el('div', { class: 'skin-pick' }, preview,
         el('div', { style: 'display:flex;flex-direction:column;gap:6px;min-width:0' },
           el('span', { class: 'mc-btn small file-btn' }, '스킨 PNG 올리기', fileI),
@@ -1167,7 +1234,7 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
       el('label', { class: 'field' }, '한마디', quoteI),
       el('label', { class: 'field' }, '자리', deskS),
       el('div', { class: 'clock-row', style: 'margin-top:4px' },
-        el('button', { class: 'mc-btn green', type: 'submit', text: editing ? '저장하기' : '입사하기' }),
+        el('button', { class: 'mc-btn green', type: 'submit', text: editing ? '저장하기' : usesApproval() && !S.isOwner ? '입사 신청하기' : '입사하기' }),
         editing ? el('button', { class: 'mc-btn', type: 'button', onclick: () => { S.editing = false; S.draftSkin = null; renderMe(); }, text: '취소' })
           : S.store && S.store.kind === 'supabase' ? el('button', { class: 'mc-btn', type: 'button', onclick: async () => { await S.store.signOut(); location.reload(); }, text: '로그아웃' }) : el('span')),
       S.store && S.store.kind === 'supabase' && S.store.email ? el('div', { class: 'muted', text: '로그인한 계정: ' + S.store.email }) : null);
@@ -1181,7 +1248,11 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
       const body = { name, role: clip(roleI.value, 10), quote: clip(quoteI.value, 40), desk, skin, color };
       try {
         if (editing) await queueWrite(() => S.store.updateMember(S.myId, body));
-        else await queueWrite(() => S.store.setMember(S.myId, { ...body, status: 'none', since: null, day: null, tasks: [], joined: Date.now() }));
+        else {
+          const approved = !usesApproval() || S.isOwner;
+          await queueWrite(() => S.store.setMember(S.myId, { ...body, status: 'none', since: null, day: null, tasks: [], joined: Date.now(), approved }));
+          if (!approved) log('입사 신청을 보냈어요. 사장님 승인을 기다려 주세요.');
+        }
         beep('xp'); S.editing = false; S.draftSkin = null;
         log(editing ? name + ' 캐릭터 정보 수정' : name + ' 입사! 환영해요');
       } catch (err) {}
@@ -1193,7 +1264,7 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
   function renderBoard() {
     const box = $('board-box'); box.innerHTML = '';
     $('today-label').textContent = longDate(Date.now());
-    const list = sortedMembers();
+    const list = crew();
     if (!list.length) { box.append(el('div', { class: 'muted', text: S.loaded ? '아직 입사한 팀원이 없어요. “내 자리”에서 첫 캐릭터를 만들어 보세요.' : '불러오는 중…' })); return; }
     const now = Date.now();
     const rows = list.slice().sort((a, b) => (b.status === 'in') - (a.status === 'in') || todayOf(b, now).ms - todayOf(a, now).ms);
@@ -1216,7 +1287,7 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
 
   /* ================= 컨텐츠 요약 ================= */
   function contentStats(c) {
-    const all = sortedMembers().flatMap(m => m.tasks.filter(t => t.c === c.id).map(t => ({ ...t, who: m })));
+    const all = crew().flatMap(m => m.tasks.filter(t => t.c === c.id).map(t => ({ ...t, who: m })));
     return { tasks: all, pct: avgP(all), done: all.filter(t => t.p === 100).length, people: new Set(all.map(t => t.who.id)).size };
   }
   function renderContents() {
@@ -1405,13 +1476,13 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
     if (act) { const e = document.getElementById(act); if (e && e !== document.activeElement) e.focus(); }
   }
   function renderHeadcount() {
-    const list = sortedMembers(), inN = list.filter(m => m.status === 'in').length;
+    const list = crew(), inN = list.filter(m => m.status === 'in').length;
     const hc = $('headcount'); hc.textContent = '';
     hc.append('근무 중 ', el('b', { text: String(inN) }), '명 · 팀원 ' + list.length + '명');
   }
   function renderAll() {
     preserve(() => {
-      syncMobs(); renderDesks(); renderHotbar(); renderMe(); renderBoard(); renderContents(); renderHeadcount();
+      syncMobs(); renderDesks(); renderHotbar(); renderMe(); renderApprovals(); renderBoard(); renderContents(); renderHeadcount();
       if (S.statusFor) renderStatus();
     });
   }
@@ -1460,7 +1531,13 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
     let store = null;
     try {
       if (window.claude && typeof window.claude.use === 'function') store = await claudeStore();
-      else if (SUPABASE.url && SUPABASE.key) store = await supabaseStore();
+      else {
+        // 키는 index.html 옆의 config.js에 두면 index.html을 바꿔도 다시 넣을 필요가 없어요
+        let cfg = SUPABASE;
+        if (!(cfg.url && cfg.key)) { try { await loadScript('config.js'); } catch (e) {} if (window.HUDONGBU_SUPABASE) cfg = window.HUDONGBU_SUPABASE; }
+        S.cfgFound = !!(cfg && cfg.url && cfg.key);
+        if (S.cfgFound) store = await supabaseStore(cfg);
+      }
     } catch (e) { log('저장소에 연결하지 못했어요.'); }
     S.store = store;
     if (!store) { S.loaded = true; renderAll(); return; }
@@ -1479,7 +1556,11 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
       if (S.loaded && gotM) {
         for (const [id, d] of next) {
           const prev = S.members.get(id);
-          if (!prev) log(d.name + ' 입사!');
+          if (!prev) log(d.approved ? d.name + ' 입사!' : '새 입사 신청: ' + d.name);
+          else if (!prev.approved && d.approved) {
+            log(d.name + ' 입사 승인!');
+            if (id === S.myId) { beep('xp'); setTimeout(() => location.reload(), 800); }
+          }
           else if (prev.status !== d.status) {
             if (d.status === 'in') log(d.name + ' 출근 (' + hhmm(d.since) + ')');
             else if (d.status === 'out') { const t = todayOf(d); log(d.name + ' 퇴근 · 오늘 ' + fmtDur(t.ms) + ', 업무 ' + t.done + '개'); }
