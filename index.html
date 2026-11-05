@@ -147,7 +147,7 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
 .stat .v { font-size: 16px; font-variant-numeric: tabular-nums; }
 .skin-pick { display: flex; gap: 10px; align-items: center; }
 .skin-preview { flex: none; width: 56px; height: 84px; background: #0b0a0e; border: 1px solid var(--line); display: grid; place-items: center; }
-.skin-preview canvas { width: 32px; height: 64px; }
+.skin-preview canvas { width: 48px; height: 76px; filter: drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000); }
 .file-btn { position: relative; overflow: hidden; display: inline-block; }
 .file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .join-form, .login { display: flex; flex-direction: column; gap: 9px; }
@@ -218,16 +218,17 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
 .mob.me .nm-tag { color: #a7f58a; }
 .mob .wbar { position: absolute; bottom: calc(100% + 5px); left: 50%; width: 34px; margin-left: -17px; height: 6px; background: #f2f2f2; border: 1px solid #000; pointer-events: none; }
 .mob .wbar i { display: block; height: 100%; background: var(--green); }
-.mob .bubble { position: absolute; bottom: calc(100% + 34px); left: 50%; transform: translateX(-50%); width: max-content; max-width: 200px; background: #fff; color: #111; border: 2px solid #000; box-shadow: 3px 3px 0 rgba(0,0,0,.35); padding: 5px 8px; font-size: 12px; pointer-events: none; z-index: 3; overflow-wrap: anywhere; }
+.mob .bubble { position: absolute; bottom: calc(100% + 36px); left: 50%; transform: translateX(-50%); width: max-content; max-width: 200px; background: #fff; color: #111; border: 2px solid #000; box-shadow: 3px 3px 0 rgba(0,0,0,.35); padding: 5px 8px; font-size: 12px; pointer-events: none; z-index: 3; overflow-wrap: anywhere; }
 .mob .bubble::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -6px; border: 6px solid transparent; border-top-color: #000; }
-.figure { position: relative; width: 48px; height: 96px; }
+.figure { position: relative; width: 48px; height: 76px;
+  filter: drop-shadow(2px 0 0 #141414) drop-shadow(-2px 0 0 #141414) drop-shadow(0 2px 0 #141414) drop-shadow(0 -2px 0 #141414); }
 .figure .part { position: absolute; }
-.figure .head { left: 12px; top: 0; width: 24px; height: 24px; z-index: 3; }
-.figure .body { left: 12px; top: 24px; width: 24px; height: 36px; z-index: 2; }
-.figure .arm-r { left: 0; top: 24px; width: 12px; height: 36px; transform-origin: 50% 4px; z-index: 1; }
-.figure .arm-l { left: 36px; top: 24px; width: 12px; height: 36px; transform-origin: 50% 4px; z-index: 1; }
-.figure .leg-r { left: 12px; top: 60px; width: 12px; height: 36px; transform-origin: 50% 2px; }
-.figure .leg-l { left: 24px; top: 60px; width: 12px; height: 36px; transform-origin: 50% 2px; }
+.figure .head { left: 4px; top: 0; width: 40px; height: 40px; z-index: 3; }
+.figure .body { left: 12px; top: 40px; width: 24px; height: 24px; z-index: 2; }
+.figure .arm-r { left: 0; top: 40px; width: 12px; height: 24px; transform-origin: 50% 3px; z-index: 1; }
+.figure .arm-l { left: 36px; top: 40px; width: 12px; height: 24px; transform-origin: 50% 3px; z-index: 1; }
+.figure .leg-r { left: 12px; top: 64px; width: 12px; height: 12px; transform-origin: 50% 1px; }
+.figure .leg-l { left: 24px; top: 64px; width: 12px; height: 12px; transform-origin: 50% 1px; }
 .mob.facing-left .figure { transform: scaleX(-1); }
 .mob::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -4px; height: 7px; background: rgba(0,0,0,.25); border-radius: 50%; z-index: -1; }
 @keyframes swing-a { 0%,100% { transform: rotate(26deg); } 50% { transform: rotate(-26deg); } }
@@ -400,7 +401,7 @@ details.past[open] summary::before { content: "▼"; }
     { label: '06', x: 68.5, y: 56, front: 'drawers', l: 'none', r: 'duck' },
     { label: '07', x: 87, y: 56, front: 'flowers', l: 'plant', r: 'none' }
   ];
-  const seatOf = i => ({ x: DESKS[i].x + (DESKS[i].boss ? 3.5 : 3), y: DESKS[i].y + 10.5 });
+  const seatOf = i => ({ x: DESKS[i].x + (DESKS[i].boss ? 3.5 : 3), y: DESKS[i].y + 6.5 });
   const NPC_ID = '__boss_npc__';
   const LINES = {
     grab: ['어어? 내려 줘!', '근무 중인데 왜 들어!', '이거 산재 아니야?', '멀미 난다…'],
@@ -573,20 +574,21 @@ details.past[open] summary::before { content: "▼"; }
     }));
     return skinCache.get(key);
   }
-  function paintPart(canvas, src, part, scale) {
+  function paintPart(canvas, src, part, scale, sy) {
+    if (sy == null) sy = scale;
     let [bx, by, ox, oy, w, h] = PARTS[part];
     if (!src.tall) { if (part === 'armL') { bx = 44; by = 20; } if (part === 'legL') { bx = 4; by = 20; } if (oy >= 32) ox = -1; }
-    canvas.width = w * scale; canvas.height = h * scale;
+    canvas.width = w * scale; canvas.height = h * sy;
     const c = canvas.getContext('2d'); c.imageSmoothingEnabled = false;
-    c.drawImage(src.img, bx, by, w, h, 0, 0, w * scale, h * scale);
-    if (ox >= 0) c.drawImage(src.img, ox, oy, w, h, 0, 0, w * scale, h * scale);
+    c.drawImage(src.img, bx, by, w, h, 0, 0, w * scale, h * sy);
+    if (ox >= 0) c.drawImage(src.img, ox, oy, w, h, 0, 0, w * scale, h * sy);
   }
   async function paintFace(canvas, m) { paintPart(canvas, await skinSource(m), 'head', 8); }
   async function paintBody(canvas, m, scale) {
     const src = await skinSource(m);
-    canvas.width = 16 * scale; canvas.height = 32 * scale;
+    canvas.width = 48 * scale; canvas.height = 76 * scale;
     const x = canvas.getContext('2d'); x.imageSmoothingEnabled = false;
-    for (const [p, dx, dy] of [['armR', 0, 8], ['armL', 12, 8], ['legR', 4, 20], ['legL', 8, 20], ['body', 4, 8], ['head', 4, 0]]) { const tmp = document.createElement('canvas'); paintPart(tmp, src, p, scale); x.drawImage(tmp, dx * scale, dy * scale); }
+    for (const [p, dx, dy, a, b] of [['armR', 0, 40, 3, 2], ['armL', 36, 40, 3, 2], ['legR', 12, 64, 3, 1], ['legL', 24, 64, 3, 1], ['body', 12, 40, 3, 2], ['head', 4, 0, 5, 5]]) { const tmp = document.createElement('canvas'); paintPart(tmp, src, p, a * scale, b * scale); x.drawImage(tmp, dx * scale, dy * scale); }
   }
   function readSkinFile(file) {
     return new Promise((res, rej) => {
@@ -848,7 +850,7 @@ details.past[open] summary::before { content: "▼"; }
       el('div', { text: m.role || '팀원' }),
       el('div', { text: m.npc ? '아직 등록 전' : m.status !== 'in' ? (m.status === 'out' ? '퇴근' : '출근 전') : t ? '작업 중 · ' + t.t + ' ' + t.p + '%' : '대기 중' }));
     tip.style.left = Math.min(mob.x + 3, 72) + '%';
-    tip.style.top = 'calc(' + mob.y + '% - 132px)';
+    tip.style.top = 'calc(' + mob.y + '% - 116px)';
     tip.hidden = false;
   }
   function hideTip() { tip.hidden = true; }
@@ -871,7 +873,7 @@ details.past[open] summary::before { content: "▼"; }
   }
   async function dressMob(mob, m) {
     const key = (m.skin || '') + '|' + m.color; if (mob.skinKey === key) return; mob.skinKey = key;
-    const src = await skinSource(m); mob.parts.forEach(c => paintPart(c, src, c.dataset.part, 3));
+    const src = await skinSource(m); mob.parts.forEach(c => { const p = c.dataset.part; if (p === 'head') paintPart(c, src, p, 5); else if (p.startsWith('leg')) paintPart(c, src, p, 3, 1); else paintPart(c, src, p, 3, 2); });
   }
   function placeMob(mob) { mob.el.style.left = mob.x + '%'; mob.el.style.top = mob.y + '%'; mob.el.style.zIndex = Math.round(mob.y * 10); }
   function say(mob, text) { mob.bubble.textContent = text; mob.bubble.hidden = false; beep('speak'); clearTimeout(mob.timer); mob.timer = setTimeout(() => { mob.bubble.hidden = true; }, 3600); }
@@ -906,7 +908,7 @@ details.past[open] summary::before { content: "▼"; }
       const r = dragging.r;
       if (!dragging.moved && Math.hypot(e.clientX - dragging.sx, e.clientY - dragging.sy) > 6) { dragging.moved = true; beep('grab'); say(mob, pick(mob.member && mob.member.desk === 0 ? LINES.bossGrab : LINES.grab)); }
       if (!dragging.moved) return;
-      let x = (e.clientX - r.left) / r.width * 100, y = (e.clientY - r.top + 48) / r.height * 100;
+      let x = (e.clientX - r.left) / r.width * 100, y = (e.clientY - r.top + 38) / r.height * 100;
       x = Math.max(6, Math.min(94, x)); y = Math.max(28, Math.min(84, y));
       mob.x = x; mob.y = y; mob.el.style.left = x + '%'; mob.el.style.top = y + '%';
     });
