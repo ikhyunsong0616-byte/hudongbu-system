@@ -3,308 +3,240 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Do+Hyeon&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/galmuri@2.39.2/dist/galmuri.css" rel="stylesheet">
 <style>
-/* Layout: 잔디 블록 상단바 → 왼쪽 인벤토리(내 자리·출퇴근·컨텐츠·현황) + 오른쪽 사무실 월드와 핫바. 팀원 데이터는 공유 저장소에서 실시간으로 */
+/* Layout: 어두운 상단바 → 컨텐츠 탭과 보라 진행 바 → 왼쪽 정보 패널 + 가운데 픽셀 사무실(오른쪽 서랍 상태창) → 하단 상태줄 */
 :root {
   color-scheme: dark;
-  --sky: #1d2433;
-  --ink: #f3f0e6;
-  --ink-dim: #b8b2a4;
-  --ink-mute: #8f897c;
-  --stone: #3a3a3a;
-  --stone-hi: #5a5a5a;
-  --stone-lo: #1e1e1e;
-  --well: #262626;
-  --row: #313131;
-  --slot: #8b8b8b;
-  --grass: #5c9a35;
-  --grass-lo: #3d6b22;
-  --dirt: #6b4a2f;
-  --dirt-lo: #4a321f;
-  --plank: #a87f4f;
-  --plank-lo: #8a643a;
-  --dark-oak: #4a3420;
-  --dark-oak-lo: #2e2014;
-  --hoodie: #7fb0aa;
+  --bg: #0e0c12;
+  --bar: #16131c;
+  --panel: #1b1722;
+  --panel-hi: #2a2433;
+  --line: #322b3d;
+  --ink: #ece8f2;
+  --ink-dim: #b3abc0;
+  --ink-mute: #857d93;
+  --purple: #c46be6;
+  --purple-lo: #4a2a5c;
+  --green: #4fb83a;
+  --green-lo: #2b6b1d;
   --gold: #f4c542;
-  --xp: #80d040;
-  --xp-lo: #3c7a18;
-  --red: #e0533f;
-  --sea: #2f6f86;
-  --f-pixel: 'Press Start 2P', 'Do Hyeon', monospace;
-  --f-kr: 'Do Hyeon', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --red: #d8463a;
+  --inv: #c6c6c6;
+  --inv-ink: #2b2b2b;
+  --inv-mute: #5a5a5a;
+  --slot: #8b8b8b;
+  --f-ui: 'Galmuri11', 'Do Hyeon', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --f-big: 'Galmuri14', 'Galmuri11', 'Do Hyeon', sans-serif;
 }
 * { box-sizing: border-box; }
-html, body { background: var(--sky); color: var(--ink); }
-body { font-family: var(--f-kr); font-size: 17px; line-height: 1.35; -webkit-font-smoothing: none; }
+[hidden] { display: none !important; }
+html, body { background: var(--bg); color: var(--ink); }
+body { font-family: var(--f-ui); font-size: 14px; line-height: 1.45; }
 button, input, select { font: inherit; color: inherit; }
-canvas { image-rendering: pixelated; display: block; }
+canvas, img { image-rendering: pixelated; }
+
 .app {
   min-height: 100%;
-  display: flex; flex-direction: column; gap: 12px;
-  padding-block: 12px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column;
+  padding-block: 0 0;
+  padding-left: max(0px, env(safe-area-inset-left, 0px));
+  padding-right: max(0px, env(safe-area-inset-right, 0px));
 }
+.gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 
-/* ---------- 마크 UI ---------- */
-.panel {
-  background: var(--stone);
-  border: 3px solid #000;
-  box-shadow: inset 3px 3px 0 var(--stone-hi), inset -3px -3px 0 var(--stone-lo);
-  padding: 14px;
-  min-width: 0;
-}
+/* ---------- 마크 버튼 ---------- */
 .mc-btn {
-  background: #6f6f6f;
-  border: 3px solid #000;
-  box-shadow: inset 3px 3px 0 #a9a9a9, inset -3px -3px 0 #3f3f3f;
-  padding: 8px 12px;
-  cursor: pointer;
-  text-shadow: 2px 2px 0 #2a2a2a;
-  font-size: 16px; line-height: 1.2;
-  white-space: nowrap;
+  background: #6f6f6f; color: #fff;
+  border: 2px solid #000;
+  box-shadow: inset 2px 2px 0 #a9a9a9, inset -2px -2px 0 #3f3f3f;
+  padding: 6px 12px; cursor: pointer; white-space: nowrap; line-height: 1.3;
 }
-.mc-btn:hover { background: #8a8aa8; }
-.mc-btn:active { box-shadow: inset -3px -3px 0 #a9a9a9, inset 3px 3px 0 #3f3f3f; }
-.mc-btn:disabled { opacity: .45; cursor: not-allowed; }
-.mc-btn.green { background: #3f8a22; box-shadow: inset 3px 3px 0 #74c94a, inset -3px -3px 0 #22500f; }
-.mc-btn.green:hover { background: #4ea42b; }
-.mc-btn.red { background: #9c3324; box-shadow: inset 3px 3px 0 #e07a68, inset -3px -3px 0 #5a1a10; }
-.mc-btn.red:hover { background: #b83d2b; }
-.mc-btn[aria-pressed="false"] { opacity: .6; }
-.mc-btn.small { padding: 5px 8px; font-size: 14px; }
-:is(.mc-btn, .slot, .desk, .mob, input, select):focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-.label { font-family: var(--f-pixel); font-size: 10px; letter-spacing: .06em; color: var(--gold); text-shadow: 2px 2px 0 #000; }
-.section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 12px; }
-.section-head .aside { font-size: 14px; color: var(--ink-mute); }
-.muted { color: var(--ink-mute); font-size: 14px; }
-.field { display: flex; flex-direction: column; gap: 4px; font-size: 15px; color: var(--ink-dim); }
-.txt {
-  width: 100%; min-width: 0;
-  background: #000; border: 2px solid #a0a0a0;
-  padding: 7px 10px; font-size: 16px; color: var(--ink);
-}
-.txt::placeholder { color: #7d7d7d; }
-select.txt { appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, #bbb 50%), linear-gradient(-45deg, transparent 50%, #bbb 50%); background-position: calc(100% - 16px) 55%, calc(100% - 10px) 55%; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 28px; }
-.notice {
-  border: 2px solid #000; padding: 8px 10px; font-size: 15px;
-  background: #4a3a14; color: #ffe9a8;
-}
-.notice.info { background: #173444; color: #cdeefc; }
+.mc-btn:hover { background: #8484a0; }
+.mc-btn:active { box-shadow: inset -2px -2px 0 #a9a9a9, inset 2px 2px 0 #3f3f3f; }
+.mc-btn:disabled { opacity: .4; cursor: not-allowed; }
+.mc-btn.green { background: #2f7a1a; box-shadow: inset 2px 2px 0 #6ec746, inset -2px -2px 0 #1b4a0e; }
+.mc-btn.green:hover { background: #3a9221; }
+.mc-btn.red { background: #a32a1b; box-shadow: inset 2px 2px 0 #e07a68, inset -2px -2px 0 #5a1a10; }
+.mc-btn.red:hover { background: #bd3422; }
+.mc-btn.small { padding: 4px 8px; font-size: 12px; }
+:is(.mc-btn, .tab, .desk, .mob, input, select, summary, .slot):focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 /* ---------- 상단바 ---------- */
-.topbar {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 12px 14px;
-  border: 3px solid #000;
-  background:
-    linear-gradient(var(--grass) 0 18px, var(--grass-lo) 18px 24px, transparent 24px),
-    repeating-linear-gradient(90deg, var(--dirt) 0 12px, var(--dirt-lo) 12px 16px, var(--dirt) 16px 28px);
-}
-.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.brand-block {
-  width: 44px; height: 44px; flex: none; border: 3px solid #000;
-  background: linear-gradient(var(--grass) 0 12px, var(--grass-lo) 12px 15px, transparent 15px), repeating-linear-gradient(45deg, var(--dirt) 0 6px, var(--dirt-lo) 6px 9px);
-}
-.brand h1 { margin: 0; font-size: 28px; font-weight: 400; line-height: 1; color: #fff; text-shadow: 3px 3px 0 #000; }
-.brand p { margin: 4px 0 0; font-family: var(--f-pixel); font-size: 9px; color: #e9f5d8; text-shadow: 2px 2px 0 #000; }
-.top-right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.headcount {
-  font-size: 16px; background: rgba(0,0,0,.55); border: 2px solid #000; padding: 6px 10px;
-  text-shadow: 2px 2px 0 #000; white-space: nowrap;
-}
-.headcount b { color: var(--xp); font-weight: 400; }
+.topbar { background: var(--bar); border-bottom: 1px solid #000; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 8px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand-ico { width: 24px; height: 24px; flex: none; border: 1px solid #000; }
+.brand b { font-family: var(--f-big); font-weight: 400; font-size: 17px; color: #fff; }
+.brand span { color: var(--ink-mute); font-size: 13px; }
+.top-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-dim); white-space: nowrap; }
+.live i { width: 8px; height: 8px; background: #6b6b6b; display: inline-block; }
+.live.on i { background: #5bd23f; box-shadow: 0 0 6px #5bd23f; }
+.now { font-size: 13px; color: var(--ink-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.now b { color: #fff; font-weight: 400; }
 
-/* ---------- 그리드 ---------- */
-.main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-.side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.world-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; order: -1; }
-@media (min-width: 1040px) {
+/* ---------- 컨텐츠 탭 + 진행 바 ---------- */
+.tabs-wrap { background: var(--bg); padding-block: 8px 4px; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.tab {
+  flex: none; display: inline-flex; align-items: center; gap: 8px;
+  background: #3a3a3a; color: #bdbdbd;
+  border: 2px solid #000;
+  box-shadow: inset 2px 2px 0 #565656, inset -2px -2px 0 #262626;
+  padding: 5px 8px 5px 12px; cursor: pointer; white-space: nowrap; font-size: 13px;
+}
+.tab:hover { background: #4a4a4a; }
+.tab[aria-selected="true"] { background: #d4d4d4; color: #1e1e1e; box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 #8b8b8b; }
+.tab .cnt { min-width: 20px; text-align: center; font-size: 12px; padding: 0 4px; background: #262626; color: #9a9a9a; border: 1px solid #000; }
+.tab .cnt.on { background: var(--green); color: #fff; }
+.tab.add { color: var(--gold); padding-right: 12px; }
+.add-content { display: flex; gap: 6px; margin-top: 6px; max-width: 420px; }
+.add-content input { flex: 1; min-width: 0; }
+.progress { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-block: 2px 8px; text-align: center; }
+.progress .ptxt { font-size: 13px; color: var(--ink-dim); }
+.progress .ptxt b { color: var(--purple); font-weight: 400; }
+.progress .ptxt strong { color: #fff; font-weight: 400; }
+.pbar { width: min(560px, 100%); height: 6px; display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; }
+.pbar i { background: var(--purple-lo); }
+.pbar i.on { background: var(--purple); box-shadow: 0 0 4px rgba(196,107,230,.6); }
+
+/* ---------- 메인 ---------- */
+.main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding-block: 0 12px; min-height: 0; }
+.side { display: flex; flex-direction: column; gap: 10px; min-width: 0; order: 2; }
+.world { position: relative; min-width: 0; order: 1; display: flex; flex-direction: column; }
+@media (min-width: 1100px) {
   html, body { height: 100%; }
   .app { height: 100%; }
-  .main { flex: 1; min-height: 0; grid-template-columns: 380px minmax(0, 1fr); }
-  .side { min-height: 0; overflow-y: auto; padding-right: 4px; }
-  .world-col { min-height: 0; order: 0; }
-  .office { flex: 1; min-height: 520px; }
+  .main { grid-template-columns: 330px minmax(0, 1fr); }
+  .side { order: 0; min-height: 0; overflow-y: auto; padding-right: 2px; }
+  .world { min-height: 0; }
+  .office-scroll { flex: 1; }
 }
 
-/* ---------- 내 자리 ---------- */
-.profile { display: flex; gap: 14px; align-items: center; }
-.face-frame {
-  flex: none; width: 72px; height: 72px;
-  background: var(--slot); border: 3px solid #000;
-  box-shadow: inset 3px 3px 0 #373737, inset -3px -3px 0 #fff;
-  display: grid; place-items: center;
-}
-.face-frame canvas { width: 52px; height: 52px; }
-.who { min-width: 0; flex: 1; }
-.who-name { font-size: 25px; line-height: 1.05; text-shadow: 2px 2px 0 #000; overflow-wrap: anywhere; }
-.rank { display: inline-block; margin-left: 6px; vertical-align: 3px; font-size: 14px; color: #2b2100; background: var(--gold); border: 2px solid #000; padding: 1px 7px 0; text-shadow: none; }
-.pill { display: inline-block; font-size: 14px; padding: 2px 8px 1px; border: 2px solid #000; white-space: nowrap; }
-.pill.in { background: var(--xp); color: #10240a; }
-.pill.out { background: #6a6a6a; color: #eee; }
-.pill.none { background: #3d3d3d; color: #bbb; }
-.who-sub { margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 14px; color: var(--ink-dim); }
-.clock-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
-.clock-row .mc-btn { padding: 12px 8px; font-size: 19px; }
-.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-.stat { background: var(--well); border: 2px solid #000; padding: 8px 10px; }
-.stat .k { font-size: 13px; color: var(--ink-mute); }
-.stat .v { font-size: 22px; line-height: 1.1; margin-top: 2px; font-variant-numeric: tabular-nums; }
-.mini-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.panel { background: var(--panel); border: 1px solid var(--line); padding: 12px; min-width: 0; }
+.p-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.p-head .t { color: var(--gold); font-size: 13px; }
+.p-head .a { color: var(--ink-mute); font-size: 12px; }
+.muted { color: var(--ink-mute); font-size: 12px; }
+.notice { border: 1px solid #000; padding: 8px 10px; font-size: 13px; background: #3c2f12; color: #ffe6a0; }
+.notice.info { background: #13283a; color: #cbe8fb; }
+.txt { width: 100%; min-width: 0; background: #0b0a0e; border: 1px solid #5a5266; padding: 7px 9px; color: var(--ink); }
+.txt::placeholder { color: #6e6680; }
+select.txt { appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, #aaa 50%), linear-gradient(-45deg, transparent 50%, #aaa 50%); background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 26px; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-dim); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 
-.join-form { display: flex; flex-direction: column; gap: 10px; }
-.skin-pick { display: flex; gap: 12px; align-items: center; }
-.skin-preview {
-  flex: none; width: 64px; height: 96px;
-  background: #1b1b1b; border: 2px solid #000;
-  display: grid; place-items: center;
-}
+/* 내 자리 */
+.me-head { display: flex; gap: 12px; align-items: center; }
+.face { flex: none; width: 56px; height: 56px; background: var(--slot); border: 2px solid #000; box-shadow: inset 2px 2px 0 #373737, inset -2px -2px 0 #fff; display: grid; place-items: center; }
+.face canvas { width: 40px; height: 40px; }
+.me-name { font-family: var(--f-big); font-size: 17px; overflow-wrap: anywhere; }
+.badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.bdg { font-size: 11px; padding: 1px 6px; border: 1px solid #000; white-space: nowrap; background: #d9d9d9; color: #222; }
+.bdg.g { background: #5fae3e; color: #fff; }
+.bdg.dk { background: #4a4a4a; color: #ddd; }
+.bdg.gold { background: var(--gold); color: #2b2100; }
+.bdg.blue { background: #3150a8; color: #fff; }
+.clock2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 12px; }
+.clock2 .mc-btn { padding: 9px 6px; font-size: 15px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+.stat { background: #0f0d13; border: 1px solid var(--line); padding: 6px 8px; }
+.stat .k { font-size: 11px; color: var(--ink-mute); }
+.stat .v { font-size: 16px; font-variant-numeric: tabular-nums; }
+.skin-pick { display: flex; gap: 10px; align-items: center; }
+.skin-preview { flex: none; width: 56px; height: 84px; background: #0b0a0e; border: 1px solid var(--line); display: grid; place-items: center; }
 .skin-preview canvas { width: 32px; height: 64px; }
 .file-btn { position: relative; overflow: hidden; display: inline-block; }
 .file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.join-form, .login { display: flex; flex-direction: column; gap: 9px; }
 
-/* ---------- 업무 ---------- */
-.tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.task { display: flex; align-items: center; gap: 10px; background: var(--row); border: 2px solid #000; padding: 6px 8px; font-size: 16px; }
-.task input[type="checkbox"] {
-  appearance: none; -webkit-appearance: none;
-  width: 20px; height: 20px; flex: none; margin: 0;
-  background: var(--slot); border: 2px solid #000; box-shadow: inset 2px 2px 0 #373737;
-  cursor: pointer; display: grid; place-items: center;
-}
-.task input[type="checkbox"]:checked { background: var(--xp); box-shadow: inset 2px 2px 0 #b9f08a, inset -2px -2px 0 var(--xp-lo); }
-.task input[type="checkbox"]:checked::after { content: ""; width: 8px; height: 8px; background: #10240a; }
-.task .t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.task.done .t { color: var(--ink-mute); text-decoration: line-through; }
-.tag { flex: none; font-size: 12px; padding: 1px 6px 0; border: 2px solid #000; background: var(--sea); color: #e8f7fd; white-space: nowrap; max-width: 40%; overflow: hidden; text-overflow: ellipsis; }
-.tag.none { background: #4a4a4a; color: #ccc; }
-.del { flex: none; border: 0; background: none; cursor: pointer; color: var(--ink-mute); font-family: var(--f-pixel); font-size: 10px; padding: 4px; }
-.del:hover { color: var(--red); }
-.add-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-top: 8px; }
-.add-row select { grid-column: 1 / -1; }
-
-/* ---------- 컨텐츠 ---------- */
-.tabs { display: flex; flex-wrap: wrap; gap: 8px; }
-.tab { text-align: left; padding: 9px 12px; white-space: normal; flex: 1 1 140px; }
-.tab .t-name { display: block; font-size: 18px; }
-.tab .t-pct { display: block; margin-top: 4px; font-family: var(--f-pixel); font-size: 9px; color: #ececec; }
-.tab[aria-selected="true"] { background: var(--sea); box-shadow: inset 3px 3px 0 #79c4dc, inset -3px -3px 0 #183f4d; }
-.content-card { margin-top: 12px; background: var(--well); border: 3px solid #000; padding: 12px; }
-.content-title { font-size: 22px; text-shadow: 2px 2px 0 #000; overflow-wrap: anywhere; }
-.xp-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--ink-dim); margin-top: 8px; }
-.xp-level { font-family: var(--f-pixel); font-size: 11px; color: var(--xp); text-shadow: 2px 2px 0 #000; }
-.xp-bar { margin-top: 6px; height: 14px; border: 2px solid #000; background: #1b1b1b; position: relative; overflow: hidden; }
-.xp-fill { height: 100%; width: 0; background: linear-gradient(var(--xp) 0 50%, #62b02c 50% 100%); box-shadow: inset 0 -2px 0 var(--xp-lo); transition: width .35s steps(8); }
-.xp-bar::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), #000 calc(10% - 2px) 10%); opacity: .55; }
-.c-group { margin-top: 12px; }
-.c-group-name { font-size: 15px; color: var(--hoodie); margin-bottom: 4px; }
-.content-admin { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-.content-admin .txt { flex: 1 1 160px; }
-
-/* ---------- 출퇴근 현황 ---------- */
-.board-wrap { overflow-x: auto; }
-.board { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
-.board th { text-align: left; font-weight: 400; color: var(--ink-mute); font-size: 13px; padding: 4px 6px; border-bottom: 2px solid #000; white-space: nowrap; }
-.board td { padding: 6px; border-bottom: 2px solid #2a2a2a; vertical-align: middle; }
-.board tr.sel td { background: #2c3a2a; }
+/* 출퇴근 현황 */
+.board { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.board th { text-align: left; font-weight: 400; color: var(--ink-mute); padding: 3px 4px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.board td { padding: 5px 4px; border-bottom: 1px solid #241f2c; vertical-align: middle; }
 .board tr { cursor: pointer; }
-.board tr:hover td { background: #333; }
-.board .nm { display: flex; align-items: center; gap: 8px; min-width: 110px; }
-.board .nm canvas { width: 24px; height: 24px; flex: none; border: 2px solid #000; }
-.board .nm span { overflow-wrap: anywhere; }
+.board tbody tr:hover td { background: #241f2c; }
+.board tr.sel td { background: #2a2235; }
+.board .nm { display: flex; align-items: center; gap: 6px; min-width: 90px; }
+.board .nm canvas { width: 20px; height: 20px; border: 1px solid #000; flex: none; }
 .board .num { text-align: right; white-space: nowrap; }
+.apv { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; background: #0f0d13; border: 1px solid var(--line); padding: 7px 8px; margin-bottom: 6px; }
+.apv .nm { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 160px; }
+.apv .nm canvas { width: 28px; height: 28px; border: 1px solid #000; flex: none; }
+.log { list-style: none; margin: 0; padding: 0; max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.log li { display: flex; gap: 8px; }
+.log time { flex: none; color: var(--green); font-variant-numeric: tabular-nums; }
+.log span { min-width: 0; overflow-wrap: anywhere; color: var(--ink-dim); }
 
-.detail { margin-top: 14px; background: var(--well); border: 3px solid #000; padding: 12px; }
-.detail-head { display: flex; gap: 10px; align-items: center; }
-.detail-head canvas { width: 40px; height: 40px; border: 2px solid #000; flex: none; }
-.detail-name { font-size: 20px; overflow-wrap: anywhere; }
-.detail-quote { font-size: 14px; color: var(--ink-dim); margin-top: 2px; overflow-wrap: anywhere; }
-.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 12px; align-items: end; }
-.wk { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
-.wk .bar-box { height: 90px; width: 100%; display: flex; align-items: flex-end; justify-content: center; background: #1a1a1a; border: 2px solid #000; }
-.wk .bar { width: 70%; background: linear-gradient(90deg, var(--xp) 0 50%, #62b02c 50%); border-top: 3px solid #b9f08a; min-height: 0; }
-.wk .bar.today { background: linear-gradient(90deg, var(--gold) 0 50%, #d9a92a 50%); border-top-color: #fff2a8; }
-.wk .h { font-size: 13px; font-variant-numeric: tabular-nums; }
-.wk .d { font-family: var(--f-pixel); font-size: 8px; color: var(--ink-mute); }
-.wk .n { font-size: 12px; color: var(--xp); }
-.legend { margin-top: 8px; font-size: 13px; color: var(--ink-mute); }
-
-/* ---------- 알림 ---------- */
-.log { list-style: none; margin: 0; padding: 10px; background: #0d0d0d; border: 3px solid #000; max-height: 170px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
-.log li { display: flex; gap: 8px; min-width: 0; }
-.log time { flex: none; font-family: var(--f-pixel); font-size: 9px; color: var(--xp); padding-top: 4px; }
-.log span { min-width: 0; overflow-wrap: anywhere; color: #d9d4c6; }
-
-/* ---------- 사무실 ---------- */
+/* ---------- 사무실 (픽셀 월드) ---------- */
+.office-scroll { overflow-x: auto; overflow-y: hidden; border: 1px solid #000; background: #000; }
 .office {
-  position: relative; min-height: 560px; border: 3px solid #000; overflow: hidden; touch-action: none;
-  background: repeating-linear-gradient(0deg, var(--plank) 0 30px, var(--plank-lo) 30px 33px), var(--plank);
+  --s: 3;
+  position: relative; width: 100%; min-width: 760px; height: 100%; min-height: 600px;
+  overflow: hidden; touch-action: none;
+  background-color: #5ea13a; background-size: 48px 48px;
+  user-select: none; -webkit-user-select: none;
 }
-.office::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, transparent 0 94px, rgba(0,0,0,.18) 94px 97px, transparent 97px 190px); opacity: .7; }
-.wall { position: absolute; left: 0; right: 0; top: 0; height: 17%; min-height: 82px; border-bottom: 6px solid #2b2b2b; background: repeating-linear-gradient(0deg, #6d6d6d 0 18px, #474747 18px 21px), #6d6d6d; }
-.wall::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 40px, #474747 40px 43px, transparent 43px 84px); -webkit-mask: repeating-linear-gradient(0deg, #000 0 21px, transparent 21px 42px); mask: repeating-linear-gradient(0deg, #000 0 21px, transparent 21px 42px); }
-.window { position: absolute; top: 14px; width: 64px; height: 46px; border: 4px solid var(--dark-oak); background: linear-gradient(#9fd3f5 0 55%, #c6e8fb 55%); }
-.window::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: var(--dark-oak); }
-.window.w1 { right: 26%; } .window.w2 { right: 6%; }
-.clock-board { position: absolute; right: 44%; top: 16px; background: #1b1b1b; border: 4px solid var(--dark-oak); padding: 4px 10px 3px; font-family: var(--f-pixel); font-size: 11px; color: var(--xp); }
-.sign { position: absolute; left: 4%; top: 12px; background: var(--plank); border: 4px solid var(--dark-oak); box-shadow: 4px 4px 0 rgba(0,0,0,.35); padding: 6px 16px 5px; text-align: center; color: #2b1a0c; z-index: 2; white-space: nowrap; }
-.sign b { display: block; font-weight: 400; font-size: 22px; line-height: 1; }
-.sign small { display: block; font-family: var(--f-pixel); font-size: 8px; margin-top: 5px; color: #4a2f17; }
-.tip { position: absolute; left: 10px; bottom: 10px; z-index: 3000; background: rgba(0,0,0,.72); border: 2px solid #555; padding: 5px 9px; font-size: 14px; color: #ddd; pointer-events: none; max-width: calc(100% - 20px); }
-.tip b { color: var(--gold); font-weight: 400; }
+.layer { position: absolute; pointer-events: none; background-size: 48px 48px; }
+.l-wall { left: 0; right: 0; top: 0; height: 20%; min-height: 110px; }
+.l-vines { left: 0; right: 0; top: 0; height: 14px; background-size: 24px 24px; }
+.l-wall::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: #3b2a1a; box-shadow: 0 2px 0 rgba(0,0,0,.35); }
+.l-log { top: 0; bottom: 0; width: 5%; min-width: 36px; background-size: 48px 48px; box-shadow: inset -3px 0 0 rgba(0,0,0,.25); }
+.l-log.l { left: 0; } .l-log.r { right: 0; box-shadow: inset 3px 0 0 rgba(0,0,0,.25); }
+.l-path { left: 0; right: 0; top: 79%; height: 6%; background-size: 48px 48px; box-shadow: inset 0 3px 0 rgba(0,0,0,.18); }
+.l-bottom { left: 0; right: 0; bottom: 0; height: 2.2%; min-height: 10px; background-size: 48px 48px; }
+.spr { position: absolute; pointer-events: none; image-rendering: pixelated; }
+.flower { position: absolute; width: 6px; height: 6px; pointer-events: none; }
+.flower::before { content: ""; position: absolute; left: 1px; top: 3px; width: 2px; height: 3px; background: #2f6b1d; }
+.flower::after { content: ""; position: absolute; left: 0; top: 0; width: 4px; height: 4px; background: var(--c); }
 
-.desk { position: absolute; width: clamp(76px, 17%, 132px); transform: translateX(-50%); cursor: pointer; border: 0; padding: 0; background: none; display: flex; flex-direction: column; align-items: center; }
-.desk.boss { width: clamp(124px, 27%, 210px); }
-.desk-top { position: relative; width: 100%; height: 22px; background: repeating-linear-gradient(90deg, #b88a55 0 20px, #9a6f40 20px 22px); border: 3px solid #2a1a0c; border-bottom-width: 0; }
-.desk-front { position: relative; width: 100%; height: 30px; background: repeating-linear-gradient(0deg, #8a643a 0 9px, #6e4e2c 9px 10px); border: 3px solid #2a1a0c; }
-.desk.boss .desk-top { background: repeating-linear-gradient(90deg, #5b4127 0 20px, #45301b 20px 22px); }
-.desk.boss .desk-front { height: 36px; background: repeating-linear-gradient(0deg, var(--dark-oak) 0 11px, var(--dark-oak-lo) 11px 12px); }
-.plate { position: absolute; left: 50%; bottom: 7px; transform: translateX(-50%); background: var(--gold); color: #2b2100; border: 2px solid #000; font-size: 14px; line-height: 1; padding: 3px 8px 2px; white-space: nowrap; max-width: 92%; overflow: hidden; text-overflow: ellipsis; }
-.monitor { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); width: 40%; height: 26px; background: #222; border: 3px solid #111; }
-.monitor::before { content: ""; position: absolute; inset: 3px; background: #123b3a; box-shadow: inset 0 0 0 1px #2c8b86; }
-.monitor.off::before { background: #0c0c0c; box-shadow: none; }
-.monitor::after { content: ""; position: absolute; left: 50%; top: 100%; width: 8px; height: 4px; margin-left: -4px; background: #111; }
-.screen-text { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--f-pixel); font-size: 7px; color: #8ff0e6; z-index: 1; }
-.gold-block { position: absolute; bottom: 100%; right: 8%; width: 18px; height: 18px; background: var(--gold); border: 2px solid #8a6a10; box-shadow: inset 3px 3px 0 #fff2a8, inset -3px -3px 0 #c99a1c; }
-.plant { position: absolute; bottom: 100%; left: 8%; width: 16px; height: 22px; }
-.plant::before { content: ""; position: absolute; left: 3px; bottom: 0; width: 10px; height: 8px; background: #8a4b2a; border: 2px solid #3a1d0e; }
-.plant::after { content: ""; position: absolute; left: 0; bottom: 8px; width: 16px; height: 14px; background: #4f9a30; box-shadow: inset 4px 0 0 #6fc24a, inset -4px -4px 0 #2f6a1a; }
-.paper { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) rotate(-3deg); background: #f3efe2; color: #3a2f20; border: 2px solid #6b5d48; font-size: 13px; line-height: 1.1; padding: 3px 6px 2px; white-space: nowrap; }
-.paper.off { background: #c9c3b3; }
-.chair { width: 34%; height: 12px; margin-top: 4px; background: #3c3c3c; border: 2px solid #111; }
-.desk-label { margin-top: 4px; font-size: 14px; line-height: 1.1; white-space: nowrap; background: rgba(0,0,0,.66); color: #f1dcb4; border: 2px solid rgba(0,0,0,.4); padding: 2px 6px 1px; max-width: 160%; overflow: hidden; text-overflow: ellipsis; }
-.desk.taken .desk-label { color: #fff; }
-.desk.selected .desk-label { background: var(--gold); color: #2b2100; }
+.desk { position: absolute; transform: translateX(-50%); width: 15%; max-width: 170px; min-width: 104px; cursor: pointer; border: 0; padding: 0; background: none; display: flex; flex-direction: column; align-items: stretch; }
+.desk.boss { width: 19%; max-width: 210px; }
+.dk-items { position: relative; height: 34px; pointer-events: none; }
+.dk-mon { position: absolute; left: 14%; bottom: 0; width: 40%; height: 30px; background: #1c1c1c; border: 3px solid #0d0d0d; }
+.dk-mon::after { content: ""; position: absolute; left: 50%; bottom: -6px; width: 10px; height: 4px; margin-left: -5px; background: #0d0d0d; }
+.dk-mon.on { background: #1d2f3d; box-shadow: inset 0 0 0 2px #2b4c63; }
+.dk-mon.boss-on { border-color: #b23a2e #0d0d0d #0d0d0d #b23a2e; }
+.dk-prop { position: absolute; bottom: 0; width: 30px; height: 30px; }
+.dk-prop.l { left: 0; } .dk-prop.r { right: 4%; }
+.dk-top { height: 12px; background: #e2c58e; border: 2px solid #8a6a3a; border-bottom-width: 3px; }
+.dk-front { position: relative; height: 40px; margin: 0 6%; background: #d8b97f; box-shadow: inset 0 3px 0 #c4a26a; border-left: 3px solid #b8955c; border-right: 3px solid #b8955c; }
+.dk-front img { position: absolute; left: 8%; right: 8%; bottom: 4px; width: 84%; height: 30px; object-fit: contain; }
+.dk-legs { height: 12px; margin: 0 6%; display: flex; justify-content: space-between; }
+.dk-legs::before, .dk-legs::after { content: ""; width: 6px; background: #b8955c; box-shadow: inset -2px 0 0 #9c7a45; }
+.dk-label { align-self: center; margin-top: 3px; font-size: 11px; line-height: 1.2; padding: 1px 6px; background: rgba(0,0,0,.55); color: #f1e4c8; white-space: nowrap; max-width: 150%; overflow: hidden; text-overflow: ellipsis; }
+.desk.empty .dk-label { color: #b9b0a0; }
+.desk.sel .dk-label { background: var(--gold); color: #2b2100; }
+.desk.dim, .mob.dim { opacity: .38; filter: grayscale(.6); }
 
-.mob { position: absolute; width: 64px; transform: translate(-50%, -100%); cursor: grab; touch-action: none; }
+/* 캐릭터 */
+.mob { position: absolute; width: 48px; transform: translate(-50%, -100%); cursor: grab; touch-action: none; }
 .mob.dragging { cursor: grabbing; }
-.nametag { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.55); color: #fff; padding: 2px 7px 1px; font-size: 15px; white-space: nowrap; line-height: 1.15; pointer-events: none; }
-.nametag em { font-style: normal; color: var(--gold); }
-.mob.me .nametag { outline: 2px solid var(--xp); }
-.bubble { position: absolute; bottom: calc(100% + 34px); left: 50%; transform: translateX(-50%); width: max-content; max-width: 210px; background: #fff; color: #111; border: 3px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,.4); padding: 7px 10px 6px; font-size: 15px; line-height: 1.3; pointer-events: none; z-index: 2; overflow-wrap: anywhere; }
-.bubble::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -8px; border: 8px solid transparent; border-top-color: #000; }
-.figure { position: relative; width: 64px; height: 128px; filter: drop-shadow(3px 0 0 rgba(0,0,0,.25)); }
+.mob .nm-tag { position: absolute; bottom: calc(100% + 16px); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.5); color: #fff; font-size: 11px; padding: 0 5px; white-space: nowrap; pointer-events: none; }
+.mob.me .nm-tag { color: #a7f58a; }
+.mob .wbar { position: absolute; bottom: calc(100% + 5px); left: 50%; width: 34px; margin-left: -17px; height: 6px; background: #f2f2f2; border: 1px solid #000; pointer-events: none; }
+.mob .wbar i { display: block; height: 100%; background: var(--green); }
+.mob .bubble { position: absolute; bottom: calc(100% + 34px); left: 50%; transform: translateX(-50%); width: max-content; max-width: 200px; background: #fff; color: #111; border: 2px solid #000; box-shadow: 3px 3px 0 rgba(0,0,0,.35); padding: 5px 8px; font-size: 12px; pointer-events: none; z-index: 3; overflow-wrap: anywhere; }
+.mob .bubble::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -6px; border: 6px solid transparent; border-top-color: #000; }
+.figure { position: relative; width: 48px; height: 96px; }
 .figure .part { position: absolute; }
-.figure .head { left: 16px; top: 0; width: 32px; height: 32px; z-index: 3; }
-.figure .body { left: 16px; top: 32px; width: 32px; height: 48px; z-index: 2; }
-.figure .arm-r { left: 0; top: 32px; width: 16px; height: 48px; transform-origin: 50% 6px; z-index: 1; }
-.figure .arm-l { left: 48px; top: 32px; width: 16px; height: 48px; transform-origin: 50% 6px; z-index: 1; }
-.figure .leg-r { left: 16px; top: 80px; width: 16px; height: 48px; transform-origin: 50% 2px; }
-.figure .leg-l { left: 32px; top: 80px; width: 16px; height: 48px; transform-origin: 50% 2px; }
+.figure .head { left: 12px; top: 0; width: 24px; height: 24px; z-index: 3; }
+.figure .body { left: 12px; top: 24px; width: 24px; height: 36px; z-index: 2; }
+.figure .arm-r { left: 0; top: 24px; width: 12px; height: 36px; transform-origin: 50% 4px; z-index: 1; }
+.figure .arm-l { left: 36px; top: 24px; width: 12px; height: 36px; transform-origin: 50% 4px; z-index: 1; }
+.figure .leg-r { left: 12px; top: 60px; width: 12px; height: 36px; transform-origin: 50% 2px; }
+.figure .leg-l { left: 24px; top: 60px; width: 12px; height: 36px; transform-origin: 50% 2px; }
 .mob.facing-left .figure { transform: scaleX(-1); }
-.mob::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -5px; height: 9px; background: rgba(0,0,0,.28); border-radius: 50%; z-index: -1; }
-@keyframes swing-a { 0%,100% { transform: rotate(28deg); } 50% { transform: rotate(-28deg); } }
-@keyframes swing-b { 0%,100% { transform: rotate(-28deg); } 50% { transform: rotate(28deg); } }
+.mob::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -4px; height: 7px; background: rgba(0,0,0,.25); border-radius: 50%; z-index: -1; }
+@keyframes swing-a { 0%,100% { transform: rotate(26deg); } 50% { transform: rotate(-26deg); } }
+@keyframes swing-b { 0%,100% { transform: rotate(-26deg); } 50% { transform: rotate(26deg); } }
 @keyframes flail-a { 0%,100% { transform: rotate(150deg); } 50% { transform: rotate(110deg); } }
 @keyframes flail-b { 0%,100% { transform: rotate(-110deg); } 50% { transform: rotate(-150deg); } }
 @keyframes kick { 0%,100% { transform: rotate(18deg); } 50% { transform: rotate(-18deg); } }
-@keyframes breathe { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes breathe { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
 @keyframes shake { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
-@keyframes pop { from { transform: translateX(-50%) scale(.6); } to { transform: translateX(-50%) scale(1); } }
 .mob.walking .arm-r, .mob.walking .leg-l { animation: swing-a .5s steps(4) infinite; }
 .mob.walking .arm-l, .mob.walking .leg-r { animation: swing-b .5s steps(4) infinite; }
 .mob.idle .head { animation: breathe 2.4s steps(2) infinite; }
@@ -313,263 +245,169 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
 .mob.dragging .arm-l { animation: flail-b .22s steps(2) infinite; }
 .mob.dragging .leg-r { animation: kick .2s steps(2) infinite; }
 .mob.dragging .leg-l { animation: kick .2s steps(2) infinite reverse; }
-.bubble:not([hidden]) { animation: pop .12s steps(3); }
 
-.hotbar-wrap { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
-.hotbar { display: flex; background: #000; border: 3px solid #000; overflow-x: auto; max-width: 100%; }
-.slot { position: relative; width: 52px; height: 52px; flex: none; background: var(--slot); border: 0; box-shadow: inset 3px 3px 0 #373737, inset -3px -3px 0 #c6c6c6; margin: 2px; cursor: pointer; display: grid; place-items: center; padding: 0; }
-.slot canvas { width: 32px; height: 32px; }
-.slot.out canvas { filter: grayscale(1) brightness(.7); }
-.slot .q { font-family: var(--f-pixel); font-size: 14px; color: #5e5e5e; text-shadow: 1px 1px 0 #b5b5b5; }
-.slot .num { position: absolute; right: 3px; bottom: 2px; font-family: var(--f-pixel); font-size: 8px; color: #fff; text-shadow: 1px 1px 0 #000; }
-.slot .dot { position: absolute; left: 4px; top: 4px; width: 8px; height: 8px; border: 2px solid #000; background: var(--xp); }
-.slot.active { box-shadow: inset 0 0 0 3px #fff; outline: 3px solid #fff; outline-offset: -1px; z-index: 1; }
-.hotbar-caption { font-size: 15px; color: var(--ink-dim); overflow-wrap: anywhere; }
-.hotbar-caption b { color: #fff; font-weight: 400; }
+.mtip { position: absolute; z-index: 4000; pointer-events: none; background: #0d0a12; border: 2px solid #3d2aa6; box-shadow: 0 0 0 1px #000; padding: 6px 10px; font-size: 13px; line-height: 1.5; color: #d8d3e0; max-width: 260px; }
+.mtip .n { color: #6fd36a; }
 
-@media (max-width: 560px) {
-  .brand h1 { font-size: 24px; }
-  .office { min-height: 560px; }
-  .tip, .window, .clock-board { display: none; }
-  .slot { width: 36px; height: 36px; margin: 1px; }
-  .slot canvas { width: 22px; height: 22px; }
-  .slot .num { font-size: 7px; }
-  .sign b { font-size: 18px; }
-  .desk-label, .paper, .plate { font-size: 12px; }
-  .form-row { grid-template-columns: 1fr; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .mob *, .bubble { animation: none !important; }
-  .xp-fill { transition: none; }
-}
-</style>
+/* 하단 상태줄 */
+.statusbar { background: var(--bar); border-top: 1px solid #000; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--ink-mute); padding-block: 5px; font-variant-numeric: tabular-nums; }
+.statusbar b { color: var(--ink-dim); font-weight: 400; }
 
-<style>
-/* ---------- v3 추가: 실시간 시계, 상태창, 진행도, 로그인 ---------- */
-[hidden] { display: none !important; }
-/* 상태창 버튼 글자 또렷하게 */
-.modal .mc-btn { color: #ffffff; text-shadow: none; font-size: 16px; }
-.modal .mc-btn.green { background: #2f7a1a; }
-.modal .mc-btn.green:hover { background: #3a9221; }
-.modal .mc-btn.red { background: #a32a1b; }
-.modal .mc-btn.red:hover { background: #bd3422; }
-.modal .mc-btn.close { background: #6f6f6f; }
-:root {
-  --inv: #c6c6c6;
-  --inv-hi: #ffffff;
-  --inv-lo: #555555;
-  --inv-ink: #2b2b2b;
-  --inv-mute: #5a5a5a;
-  --inv-well: #8b8b8b;
-}
-.now {
-  display: flex; flex-direction: column; align-items: flex-end;
-  background: rgba(0,0,0,.6); border: 2px solid #000; padding: 4px 10px 3px;
-  text-shadow: 2px 2px 0 #000; line-height: 1.1;
-}
-.now .date { font-size: 15px; color: #e9f5d8; white-space: nowrap; }
-.now .time { font-family: var(--f-pixel); font-size: 13px; color: var(--xp); font-variant-numeric: tabular-nums; margin-top: 3px; }
-.clock-board { right: 44%; font-size: 10px; line-height: 1.5; text-align: center; }
-.clock-board .d { color: #e9f5d8; font-size: 8px; }
-
-/* 상태창 (마크 인벤토리 느낌) */
-.modal-back {
-  position: fixed; inset: 0; z-index: 9000;
-  background: rgba(10,12,18,.72);
-  display: flex; align-items: flex-start; justify-content: center;
-  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
-  overflow-y: auto;
-}
-.modal {
-  width: 100%; max-width: 760px; margin-block: auto;
+/* ---------- 오른쪽 서랍 상태창 ---------- */
+.drawer {
+  position: absolute; top: 0; right: 0; bottom: 0; z-index: 6000;
+  width: min(440px, 100%);
   background: var(--inv); color: var(--inv-ink);
-  border: 3px solid #000;
-  box-shadow: inset 3px 3px 0 var(--inv-hi), inset -3px -3px 0 var(--inv-lo), 8px 8px 0 rgba(0,0,0,.45);
-  padding: 18px;
-  position: relative;
+  border-left: 3px solid #000; box-shadow: -6px 0 0 rgba(0,0,0,.35);
+  overflow-y: auto; overscroll-behavior: contain;
 }
-.modal h2 { margin: 0; font-size: 28px; font-weight: 400; line-height: 1.05; overflow-wrap: anywhere; }
-.modal .close {
-  position: absolute; top: 10px; right: 10px;
-  width: 36px; height: 36px; padding: 0;
-  font-family: var(--f-pixel); font-size: 12px;
+@media (max-width: 1099px) {
+  .drawer { position: fixed; inset: 0; width: 100%; border-left: 0; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 }
-.st-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: start; padding-right: 40px; }
-.st-avatar {
-  width: 112px; height: 160px;
-  background: #1e1e1e; border: 3px solid;
-  border-color: var(--inv-lo) var(--inv-hi) var(--inv-hi) var(--inv-lo);
-  display: grid; place-items: center;
-}
-.st-avatar canvas { width: 64px; height: 128px; }
-.st-role { display: inline-block; margin-top: 6px; font-size: 15px; background: var(--gold); border: 2px solid #000; padding: 1px 8px 0; }
-.st-quote { margin-top: 8px; font-size: 15px; color: var(--inv-mute); overflow-wrap: anywhere; }
-.st-now { margin-top: 8px; font-size: 14px; color: var(--inv-mute); }
-.st-now b { font-weight: 400; color: var(--inv-ink); font-variant-numeric: tabular-nums; }
-.st-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
-.st-stat { background: var(--inv-well); border: 3px solid; border-color: #373737 #fff #fff #373737; padding: 6px 10px; color: #fff; text-shadow: 2px 2px 0 #3f3f3f; min-width: 0; }
-.st-stat .k { font-size: 13px; color: #f0f0f0; }
-.st-stat .v { font-size: 21px; line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.st-sec { margin-top: 18px; }
-.st-sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; border-bottom: 3px solid var(--inv-lo); padding-bottom: 4px; margin-bottom: 10px; }
-.st-sec-head h3 { margin: 0; font-size: 20px; font-weight: 400; }
-.st-sec-head span { font-size: 14px; color: var(--inv-mute); }
-.st-empty { font-size: 15px; color: var(--inv-mute); }
-
-.ptask {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center;
-  background: #b2b2b2; border: 2px solid #000; padding: 8px 10px; margin-bottom: 6px;
-}
-.ptask .pt-name { font-size: 17px; overflow-wrap: anywhere; min-width: 0; }
-.ptask.done .pt-name { text-decoration: line-through; color: var(--inv-mute); }
-.ptask .pt-meta { display: flex; align-items: center; gap: 6px; justify-self: end; }
-.ptask .pt-pct { font-family: var(--f-pixel); font-size: 10px; width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
-.ptask .tag { max-width: 140px; }
-.seg { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; }
-.seg button, .seg span {
-  height: 16px; border: 2px solid #000; background: #3a3a3a; padding: 0; cursor: pointer;
-}
-.seg span { cursor: default; }
-.seg .on { background: linear-gradient(var(--xp) 0 50%, #62b02c 50%); }
-.ptask.done .seg .on { background: linear-gradient(var(--gold) 0 50%, #d9a92a 50%); }
-.seg button:hover { outline: 2px solid #fff; outline-offset: -4px; }
-.seg-zero { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: 12px; color: var(--inv-mute); }
-.seg-zero button { border: 0; background: none; padding: 0; color: var(--inv-mute); cursor: pointer; text-decoration: underline; font-size: 12px; }
-
-.modal .txt { background: #000; color: #f3f0e6; }
-.modal .add-row { margin-top: 10px; }
-.cprog { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; background: #b2b2b2; border: 2px solid #000; padding: 8px 10px; margin-bottom: 6px; }
-.cprog .cp-name { font-size: 17px; overflow-wrap: anywhere; }
-.cprog .cp-num { font-size: 14px; color: var(--inv-ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.cprog .xp-bar { grid-column: 1 / -1; margin-top: 2px; }
-.cprog .cp-mine { grid-column: 1 / -1; font-size: 13px; color: var(--inv-mute); }
-.cprog .del-c { grid-column: 1 / -1; justify-self: start; }
-.modal .week .wk .bar-box { background: #2a2a2a; }
-.modal .week .h, .modal .week .d { color: var(--inv-ink); }
-.modal .week .n { color: #2e6a12; }
-.modal .legend { color: var(--inv-mute); }
-.modal .notice { margin-top: 10px; }
-.st-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-
-/* 사이드 컨텐츠 요약 */
-.c-sum { display: flex; flex-direction: column; gap: 10px; }
-.c-sum-row .top { display: flex; justify-content: space-between; gap: 8px; font-size: 16px; }
-.c-sum-row .top span:last-child { color: var(--ink-mute); font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-
-/* 입사 신청 */
-.apv { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; background: var(--row); border: 2px solid #000; padding: 8px 10px; margin-bottom: 6px; }
-.apv .nm { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1 1 180px; }
-.apv .nm canvas { width: 32px; height: 32px; border: 2px solid #000; flex: none; }
-.apv-name { font-size: 17px; overflow-wrap: anywhere; }
-.apv-btns { display: flex; gap: 6px; }
-/* 로그인 */
-.login { display: flex; flex-direction: column; gap: 10px; }
-.login .clock-row { margin-top: 0; }
-.backend { font-size: 12px; color: var(--ink-mute); }
+.dr-banner { height: 56px; background-size: 48px 48px; border-bottom: 3px solid #6b6b6b; position: relative; }
+.dr-close { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; padding: 0; font-size: 13px; }
+.dr-body { padding: 12px 14px 18px; }
+.dr-head { display: flex; gap: 12px; align-items: center; }
+.dr-face { flex: none; width: 64px; height: 64px; background: var(--slot); border: 2px solid; border-color: #373737 #fff #fff #373737; display: grid; place-items: center; }
+.dr-face canvas { width: 48px; height: 48px; }
+.dr-name { font-family: var(--f-big); font-size: 20px; line-height: 1.2; overflow-wrap: anywhere; display: flex; align-items: center; gap: 6px; }
+.dr-name i { width: 8px; height: 12px; background: var(--c, #c43a3a); display: inline-block; box-shadow: 0 6px 0 -3px #2f6b1d; }
+.dr-quote { font-size: 12px; color: var(--inv-mute); margin-top: 2px; overflow-wrap: anywhere; }
+.inv-row { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 2px; background: #555; border: 2px solid #000; padding: 3px; margin-top: 12px; }
+.slot { aspect-ratio: 1; background: var(--slot); box-shadow: inset 2px 2px 0 #373737, inset -2px -2px 0 #fff; display: grid; place-items: center; position: relative; }
+.slot img { width: 70%; height: 70%; }
+.slot .q { position: absolute; right: 2px; bottom: 0; font-size: 10px; color: #fff; text-shadow: 1px 1px 0 #000; }
+.dr-sec { margin-top: 16px; }
+.dr-sec > h3 { margin: 0 0 8px; font-size: 14px; font-weight: 400; display: flex; align-items: center; gap: 6px; }
+.dr-sec > h3::before { content: ""; width: 6px; height: 10px; background: #c43a3a; box-shadow: 0 5px 0 -2px #2f6b1d; }
+.dr-sec > h3 span { margin-left: auto; font-size: 12px; color: var(--inv-mute); }
+.card { background: #e6e6e6; border: 2px solid #000; box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 #a0a0a0; padding: 10px 12px; }
+.card + .card { margin-top: 6px; }
+.task-title { font-size: 15px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; overflow-wrap: anywhere; }
+.big-bar { position: relative; margin-top: 10px; height: 14px; background: #111; border: 2px solid #000; display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+.big-bar > * { background: #2a2a2a; border: 0; padding: 0; cursor: default; }
+.big-bar > button { cursor: pointer; }
+.big-bar > button:hover { background: #3c5a34; }
+.big-bar .on { background: linear-gradient(#5fd03f 0 50%, #3fa82a 50%); }
+.done .big-bar .on { background: linear-gradient(#ffd24a 0 50%, #e0a92a 50%); }
+.pct { text-align: center; color: #2e7a19; font-size: 14px; margin-top: 4px; }
+.done .pct { color: #8a6a10; }
+.meta { font-size: 12px; color: var(--inv-mute); margin-top: 2px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.meta button { border: 0; background: none; padding: 0; color: #3150a8; text-decoration: underline; cursor: pointer; font-size: 12px; }
+.mini { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 6px 0; border-top: 1px solid #b0b0b0; font-size: 13px; }
+.mini:first-child { border-top: 0; }
+.mini .big-bar { grid-column: 1 / -1; margin-top: 2px; height: 10px; }
+.timeline { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+.timeline li { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 8px; padding: 3px 0; }
+.timeline time { color: var(--inv-mute); font-variant-numeric: tabular-nums; }
+.timeline span { overflow-wrap: anywhere; }
+details.past summary { cursor: pointer; font-size: 14px; list-style: none; display: flex; align-items: center; gap: 6px; }
+details.past summary::-webkit-details-marker { display: none; }
+details.past summary::before { content: "▶"; font-size: 10px; }
+details.past[open] summary::before { content: "▼"; }
+.past-item { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; padding: 6px 0; border-top: 1px solid #b0b0b0; font-size: 13px; }
+.past-item span:first-child { overflow-wrap: anywhere; min-width: 0; }
+.past-item .when { flex: none; font-size: 12px; color: var(--inv-mute); }
+.drawer .txt { background: #0b0a0e; color: #ece8f2; border-color: #000; }
+.add-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; margin-top: 8px; }
+.add-row select { grid-column: 1 / -1; }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; align-items: end; }
+.wk { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; font-size: 11px; }
+.wk .bb { height: 70px; width: 100%; display: flex; align-items: flex-end; justify-content: center; background: #2a2a2a; border: 1px solid #000; }
+.wk .bb i { width: 66%; background: linear-gradient(90deg, #5fd03f 0 50%, #3fa82a 50%); }
+.wk .bb i.today { background: linear-gradient(90deg, #ffd24a 0 50%, #e0a92a 50%); }
+.wk .n { color: #2e7a19; min-height: 14px; }
+.wk .d { color: var(--inv-mute); }
+.cp { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; padding: 6px 0; border-top: 1px solid #b0b0b0; font-size: 13px; }
+.cp:first-child { border-top: 0; }
+.cp .pbar { grid-column: 1 / -1; width: 100%; height: 6px; }
+.cp .pbar i { background: #3a2a45; }
 
 @media (max-width: 560px) {
-  .st-head { grid-template-columns: 1fr; padding-right: 0; }
-  .st-avatar { width: 100%; height: 150px; }
-  .st-stats { grid-template-columns: 1fr 1fr; }
-  .modal { padding: 14px; }
-  .modal h2 { padding-right: 44px; }
-  .now .date { font-size: 13px; }
+  .brand span { display: none; }
+  .row2 { grid-template-columns: 1fr; }
+  .office { min-width: 720px; }
 }
+@media (prefers-reduced-motion: reduce) { .mob * { animation: none !important; } }
 </style>
 
 <div class="app">
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-block" aria-hidden="true"></div>
-      <div>
-        <h1>후동부 사무실</h1>
-        <p>HUDONGBU OFFICE · ONLINE</p>
-      </div>
-    </div>
+  <header class="topbar gutter">
+    <div class="brand"><canvas class="brand-ico" id="brand-ico" width="16" height="16" aria-hidden="true"></canvas><b>후동부 사무실</b><span>· Hudongbu Office</span></div>
     <div class="top-right">
-      <div class="now" aria-label="현재 날짜와 시간"><span class="date" id="now-date">-</span><span class="time" id="now-time">--:--:--</span></div>
-      <span class="headcount" id="headcount">근무 중 <b>0</b>명 · 팀원 0명</span>
-      <button class="mc-btn" id="btn-sound" type="button" aria-pressed="true">사운드 켜짐</button>
-      <button class="mc-btn green" id="btn-meeting" type="button">회의 소집</button>
+      <span class="live" id="live"><i></i><span id="live-t">연결 중</span></span>
+      <span class="now" id="now" aria-label="현재 날짜와 시간">-</span>
+      <button class="mc-btn small" id="btn-sound" type="button" aria-pressed="true">사운드 켜짐</button>
+      <button class="mc-btn small green" id="btn-meeting" type="button">회의 소집</button>
     </div>
   </header>
 
-  <div class="main">
+  <div class="tabs-wrap gutter">
+    <div class="tabs" id="tabs" role="tablist" aria-label="컨텐츠별 사무실"></div>
+    <form class="add-content" id="add-content" hidden>
+      <input class="txt" id="new-content" maxlength="20" placeholder="새 컨텐츠 이름" aria-label="새 컨텐츠 이름">
+      <button class="mc-btn green small" type="submit">추가</button>
+      <button class="mc-btn small" type="button" id="add-content-cancel">취소</button>
+    </form>
+    <div class="progress"><div class="ptxt" id="ptxt">-</div><div class="pbar" id="pbar"></div></div>
+  </div>
+
+  <div class="main gutter">
     <aside class="side">
-      <section class="panel" aria-label="내 자리">
-        <div class="section-head"><span class="label">내 자리</span><span class="aside" id="me-aside"></span></div>
-        <div id="me-box"></div>
-      </section>
-
-      <section class="panel" aria-label="입사 신청" id="approve-sec" hidden>
-        <div class="section-head"><span class="label">입사 신청</span><span class="aside" id="approve-count"></span></div>
-        <div id="approve-box"></div>
-      </section>
-
-      <section class="panel" aria-label="오늘 출퇴근 현황">
-        <div class="section-head"><span class="label">오늘 출퇴근 현황</span><span class="aside" id="today-label"></span></div>
-        <div id="board-box"></div>
-      </section>
-
-      <section class="panel" aria-label="진행 중인 컨텐츠">
-        <div class="section-head"><span class="label">진행 중인 컨텐츠</span><span class="aside" id="content-count"></span></div>
-        <div id="content-box"></div>
-      </section>
-
-      <section class="panel" aria-label="사무실 알림">
-        <div class="section-head"><span class="label">사무실 알림</span><span class="backend" id="backend"></span></div>
-        <ul class="log" id="log" aria-live="polite"></ul>
-      </section>
+      <section class="panel" aria-label="내 자리"><div class="p-head"><span class="t">내 자리</span><span class="a" id="me-aside"></span></div><div id="me-box"></div></section>
+      <section class="panel" aria-label="입사 신청" id="approve-sec" hidden><div class="p-head"><span class="t">입사 신청</span><span class="a" id="approve-count"></span></div><div id="approve-box"></div></section>
+      <section class="panel" aria-label="오늘 출퇴근 현황"><div class="p-head"><span class="t">오늘 출퇴근</span><span class="a" id="today-label"></span></div><div id="board-box"></div></section>
+      <section class="panel" aria-label="사무실 알림"><div class="p-head"><span class="t">사무실 알림</span></div><ul class="log" id="log" aria-live="polite"></ul></section>
     </aside>
 
-    <div class="world-col">
-      <div class="office" id="office">
-        <div class="wall" aria-hidden="true"><div class="window w1"></div><div class="window w2"></div></div>
-        <div class="clock-board" id="clock-board" aria-hidden="true"><div class="d" id="board-date">-</div><div id="board-time">00:00</div></div>
-        <div class="sign"><b>후동부 사무실</b><small>EST. HUDONGBU</small></div>
-        <div id="desks"></div>
-        <div id="mobs"></div>
+    <div class="world" id="world">
+      <div class="office-scroll">
+        <div class="office" id="office">
+          <div class="layer l-wall" id="l-wall"></div>
+          <div class="layer l-vines" id="l-vines"></div>
+          <div id="decor"></div>
+          <div class="layer l-path" id="l-path"></div>
+          <div class="layer l-bottom" id="l-bottom"></div>
+          <div class="layer l-log l" id="l-log-l"></div>
+          <div class="layer l-log r" id="l-log-r"></div>
+          <div id="desks"></div>
+          <div id="mobs"></div>
+          <div class="mtip" id="mtip" hidden></div>
+        </div>
       </div>
-      <div class="panel hotbar-wrap">
-        <div class="hotbar" id="hotbar" role="toolbar" aria-label="자리 핫바"></div>
-        <div class="hotbar-caption" id="hotbar-caption"></div>
-      </div>
+      <aside class="drawer" id="drawer" role="dialog" aria-modal="false" aria-labelledby="dr-name" hidden></aside>
     </div>
   </div>
-</div>
 
-<div class="modal-back" id="modal-back" hidden>
-  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="st-name"></div>
+  <footer class="statusbar gutter"><span id="sb-left">-</span><span id="sb-right">-</span></footer>
 </div>
 
 <script>
 (() => {
-  /* ==========================================================
-     웹사이트로 쓸 때 Supabase 주소와 키는 같은 폴더의 config.js에 적으세요.
-     (여기 비워 두면 config.js를 읽어요. claude.ai에서 열면 둘 다 쓰지 않아요.)
-     ========================================================== */
-  const SUPABASE = {
-    url: '',   // 예: https://xxxx.supabase.co
-    key: ''    // Supabase의 publishable 키 (sb_publishable_... 또는 anon 키). secret 키는 절대 넣지 마세요!
-  };
+  /* 웹사이트로 쓸 때 Supabase 주소와 키는 같은 폴더의 config.js에 적으세요. claude.ai에서 열면 쓰지 않아요. */
+  const SUPABASE = { url: '', key: '' };
   const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4';
-
   const BOSS_SKIN = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAADeUlEQVR42u1bT0gUURj/vXX2tmLXpa4pUm1lFHUqCO22tyQkEYvVxYNQm5QmiNAfJLp4WFYFw4wlPHTwZlBdJKJQaxCWbnUxhAg9eHGV16FmejvOzpv1zRtnmvcD8e3M7HN+v/d93/u+954EHNydmaUQwFhXJ4EHsL6HtV/e/WqIIQSwGwT2Wjo3QEu6DvYnnRtwNXCaVy/58PLxis/336xKI+/WOptnZinPEmIyyFe7FkRoCDlEY0zgBSjputT+ueoVR3vpRrkOTckGrP/8hY1yHQCgKdmArz820ZPNOCt85DRRLuABiqO9FAA2ynU4FN9Fx8iEJ8Jq1SLpyW+Lf0d717GDycIUAOD70Qv7itSGD7PPlXQd80+fVBA0iBttK9K5AdqcStWcJ8SCOs8bI25t213LD/c55glOeYRrAS6m2812T29GKnkWLDnWCqoRt/bNyyNcCWBHmBVEFliCLPFqlrAfuBJgbrqAyYk/vt6TzWByYgpz0wVf3YQNen0P8p7NLFUFaL+ZNduXMiNYWNs2ry2sbePMtdv/LCSbkUrYaLPEvRLE0QIMYslkEonWNvN6orUNjY2NnpB3yuTsiFmnP6fpcKyrkzj1P9bVSYhdkNiTx1N+6rTf4sc6DdpNgW7BToVup8E9f+j6ncoysvTubcX9paUlcpDrBwZJI0V+datDKPMMxXqATCgBwvribNorVA1afb5WHD6R4i6UeLU6JCOmSKsGrx5rNonfOH8O0x8+RssF6uvrbduRFCDyQTDyFpBIJKInAEv63vMX0RMgyKTVsjhPgGePHwEAugeHzLaB7sGhUGV887xMsFwuC2WCw8WXUgUQ3WLjVYeRL4YUFBQUoo2zbVco22Y/1/LdsIKIkvj0eoEoMxIEpZQqEQ5IBM0PF6CUUkKI43NfVlYOJgbIHFEeaRafl5fNgTjV0kJCbwG1kAeA94uL6OvvJ/nxcV9dQbMjYFSI8Xjct5HY3Nqq+O2bC1iDz87OTk0d+CmSgkIIZgEvzheUdB3GGQDR/X+o7XElQPgE8Grv35cYIPN8AXz4f4EYr94XWS8IA1ylwtZn/icRNNEFjaZUKtRiaEHb+/MzAHpSDSoXEHQBv0dcWYDX6wGiFiB7/58rgNP2uHFP0zTX6wXsmQI3Zwlk7/9LzwRFzxeQ9VWp+/+BqwVYawoCfgPvgKaAqVC0iAAAAABJRU5ErkJggg==';
 
-  /* ================= 기본 설정 ================= */
+  /* ================= 자리 배치 (0 = 사장실) ================= */
   const DESKS = [
-    { label: '사장실', x: 50, y: 30, boss: true },
-    { label: '01', x: 14, y: 56 }, { label: '02', x: 38, y: 56 }, { label: '03', x: 62, y: 56 }, { label: '04', x: 86, y: 56 },
-    { label: '05', x: 26, y: 81 }, { label: '06', x: 50, y: 81 }, { label: '07', x: 74, y: 81 }
+    { label: '사장실', x: 50, y: 30, boss: true, front: 'flowers', l: 'gold', r: 'plant' },
+    { label: '01', x: 20, y: 30, front: 'tools', l: 'crate', r: 'none' },
+    { label: '02', x: 80, y: 30, front: 'river', l: 'none', r: 'fish' },
+    { label: '03', x: 13, y: 56, front: 'hay', l: 'cat', r: 'none' },
+    { label: '04', x: 31.5, y: 56, front: 'vines', l: 'none', r: 'cube' },
+    { label: '05', x: 50, y: 56, front: 'notes', l: 'books', r: 'none' },
+    { label: '06', x: 68.5, y: 56, front: 'drawers', l: 'none', r: 'duck' },
+    { label: '07', x: 87, y: 56, front: 'flowers', l: 'plant', r: 'none' }
   ];
-  const seatOf = i => ({ x: DESKS[i].x, y: DESKS[i].y + (DESKS[i].boss ? 6.5 : 5.5) });
+  const seatOf = i => ({ x: DESKS[i].x + (DESKS[i].boss ? 3.5 : 3), y: DESKS[i].y + 10.5 });
   const NPC_ID = '__boss_npc__';
   const LINES = {
-    grab: ['어어? 내려 줘!', '근무 중인데 왜 들어!', '이거 산재 아니야?', '멀미 난다…', '높다 높아!'],
-    drop: ['휴, 착지 완료.', '다음엔 엘리베이터 태워 줘.', '어지러워…'],
-    poke: ['두 번 누르면 내 상태창이 열려!', '오늘도 출근 완료!', '업무 진행도 올려야지', '컨텐츠 회의 언제 해?'],
+    grab: ['어어? 내려 줘!', '근무 중인데 왜 들어!', '이거 산재 아니야?', '멀미 난다…'],
+    drop: ['휴, 착지 완료.', '어지러워…', '자리로 돌아갈게'],
+    poke: ['두 번 누르면 내 상태창이 열려!', '오늘도 출근 완료!', '업무 진행도 올려야지'],
     meeting: ['회의 시작합니다!', '전원 집합!', '안건 있는 사람?'],
-    bossGrab: ['사장 들어 올리는 직원이 어딨어!', '내려놔! 결재 서류 떨어진다!', '이거 월급에서 깐다?']
+    bossGrab: ['사장 들어 올리는 직원이 어딨어!', '내려놔! 결재 서류 떨어진다!']
   };
   const pick = a => a[Math.floor(Math.random() * a.length)];
   const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
@@ -594,19 +432,104 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
   const hhmm = t => { const d = new Date(t); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
   const hhmmss = t => { const d = new Date(t); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); };
   const longDate = t => { const d = new Date(t); return d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 (' + WEEKDAY[d.getDay()] + ')'; };
-  const shortDate = t => { const d = new Date(t); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + WEEKDAY[d.getDay()]; };
-  const stamp = t => { if (!t) return ''; const same = dateKey(t) === dateKey(); return (same ? '' : shortDate(t) + ' ') + hhmm(t); };
+  const md = t => { const d = new Date(t); return (d.getMonth() + 1) + '. ' + d.getDate() + '.'; };
+  const mdhm = t => md(t) + ' ' + hhmm(t);
+  const stamp = t => { if (!t) return ''; return (dateKey(t) === dateKey() ? '' : md(t) + ' ') + hhmm(t); };
+  function ago(t) { if (!t) return ''; const m = Math.floor((Date.now() - t) / 60000); if (m < 1) return '방금'; if (m < 60) return m + '분 전'; const h = Math.floor(m / 60); if (h < 24) return h + '시간 전'; return Math.floor(h / 24) + '일 전'; }
   function fmtDur(ms) { const m = Math.max(0, Math.floor(ms / 60000)); const h = Math.floor(m / 60), r = m % 60; return h ? h + '시간 ' + r + '분' : r + '분'; }
   function fmtShort(ms) { const m = Math.max(0, Math.floor(ms / 60000)); return Math.floor(m / 60) + ':' + pad(m % 60); }
   const clip = (s, n) => String(s == null ? '' : s).trim().slice(0, n);
   const uidShort = () => Math.random().toString(36).slice(2, 10);
   const clampP = p => Math.max(0, Math.min(100, Math.round((Number(p) || 0) / 25) * 25));
-  function hashColor(s) {
-    let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-    const pal = ['#d1495b', '#edae49', '#00798c', '#30638e', '#7b2d8e', '#3b8b5a', '#c96b2c', '#5f6caf'];
-    return pal[h % pal.length];
+  function hashColor(s) { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; const pal = ['#d1495b', '#edae49', '#00798c', '#30638e', '#7b2d8e', '#3b8b5a', '#c96b2c', '#5f6caf']; return pal[h % pal.length]; }
+  function hashNum(s) { let h = 0; for (const c of String(s)) h = (h * 33 + c.charCodeAt(0)) | 0; return Math.abs(h); }
+
+  /* ================= 픽셀 텍스처 (코드로 그림) ================= */
+  function rng(seed) { let s = (seed >>> 0) || 1; return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 10000) / 10000; }; }
+  const texCache = new Map();
+  function px(key, w, h, draw) {
+    if (texCache.has(key)) return texCache.get(key);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x = c.getContext('2d');
+    const f = (col, a, b, ww = 1, hh = 1) => { x.fillStyle = col; x.fillRect(a, b, ww, hh); };
+    draw(f, x);
+    const url = c.toDataURL();
+    texCache.set(key, url);
+    return url;
   }
-  function hashNum(s) { let h = 0; for (const c of String(s)) h = (h * 33 + c.charCodeAt(0)) | 0; return h; }
+  const noise = (key, cols, seed) => px(key, 16, 16, f => { const r = rng(seed); for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) f(cols[Math.floor(r() * cols.length)], i, j); });
+  function bricks(key, cols, mortar, moss, seed) {
+    return px(key, 16, 16, f => {
+      const r = rng(seed);
+      f(mortar, 0, 0, 16, 16);
+      for (let row = 0; row < 2; row++) {
+        const off = row ? 4 : 0;
+        for (let b = -1; b < 3; b++) {
+          const x0 = b * 8 + off;
+          for (let i = 0; i < 7; i++) for (let j = 0; j < 7; j++) {
+            const xx = x0 + i; if (xx < 0 || xx > 15) continue;
+            let c = cols[Math.floor(r() * cols.length)];
+            if (moss && r() < (j < 3 ? .32 : .12)) c = moss[Math.floor(r() * moss.length)];
+            f(c, xx, row * 8 + j);
+          }
+        }
+      }
+    });
+  }
+  const T = {
+    grass: () => noise('grass', ['#5ea13a', '#58993a', '#64aa40', '#53923a', '#6aae46', '#5ea13a', '#5ea13a'], 7),
+    dirt: () => noise('dirt', ['#7b5536', '#6d4a2e', '#87603d', '#5f4027', '#7b5536'], 11),
+    sand: () => noise('sand', ['#dccf9b', '#e3d7a6', '#d3c58c', '#e8ddb0'], 5),
+    snow: () => noise('snow', ['#f4f7f9', '#e8eff3', '#fdfefe', '#dfe8ee'], 9),
+    leaves: () => noise('leaves', ['#3d7b22', '#356c1d', '#47892a', '#2e6119', '#3d7b22'], 3),
+    planks: () => px('planks', 16, 16, f => { const r = rng(4); for (let b = 0; b < 4; b++) { const base = b % 2 ? '#a98250' : '#b8905a'; for (let i = 0; i < 16; i++) for (let j = 0; j < 4; j++) f(j === 3 ? '#7d5c35' : (r() < .15 ? '#c29a62' : base), i, b * 4 + j); const s = (b * 5 + 3) % 16; f('#7d5c35', s, b * 4, 1, 3); } }),
+    mossy: () => bricks('mossy', ['#8a8a8a', '#7d7d7d', '#929292', '#747474', '#868686'], '#4d4d4d', ['#4f7d2c', '#5d8f34', '#3f6a22'], 13),
+    redbrick: () => bricks('redbrick', ['#9b4a3a', '#8a3f31', '#a85544', '#93463a'], '#cdbfae', null, 17),
+    quartz: () => bricks('quartz', ['#ece7df', '#e4ded5', '#f2eee8', '#e8e2da'], '#cfc8bc', null, 19),
+    sandstone: () => bricks('sandstone', ['#d8c88e', '#cdbb80', '#e0d29a'], '#b8a46c', null, 23),
+    log: () => px('log', 16, 16, f => { const r = rng(29); const cols = ['#6b5233', '#5c4529', '#7a5d3a', '#664d30']; for (let i = 0; i < 16; i++) { const c = cols[(i + (i % 3)) % 4]; for (let j = 0; j < 16; j++) f(r() < .18 ? '#4e3a22' : c, i, j); } })
+  };
+  const THEMES = [
+    { name: '기본', floor: 'grass', wall: 'mossy', vines: true },
+    { name: '판자', floor: 'planks', wall: 'redbrick', vines: false },
+    { name: '사막', floor: 'sand', wall: 'sandstone', vines: false },
+    { name: '설원', floor: 'snow', wall: 'quartz', vines: false },
+    { name: '숲', floor: 'grass', wall: 'mossy', vines: true }
+  ];
+
+  /* 스프라이트 */
+  const SPR = {
+    window: () => px('window', 24, 20, f => { f('#6b4a2c', 0, 0, 24, 20); const g = (y) => y < 6 ? '#f39a55' : y < 10 ? '#f6b86c' : '#f8d58a'; for (const [x0, y0] of [[2, 2], [13, 2]]) for (let j = 0; j < 16; j++) f(j > 11 ? (j > 13 ? '#3f7d24' : '#5ea13a') : g(j), x0, y0 + j, 9, 1); f('#fbe3a8', 15, 4, 3, 2); }),
+    lantern: () => px('lantern', 8, 14, f => { f('#3b3b3b', 3, 0, 2, 4); f('#2a2a2a', 1, 4, 6, 9); f('#ffd27a', 2, 6, 4, 5); f('#fff1c0', 3, 7, 2, 2); f('#2a2a2a', 2, 13, 4, 1); }),
+    bookshelf: () => px('bookshelf', 16, 16, f => { const r = rng(31); f('#a37a45', 0, 0, 16, 16); const cols = ['#b33a3a', '#3a5bb3', '#3aa04a', '#c9a23a', '#8a3ab3', '#e0e0e0', '#a0582a']; for (const y0 of [2, 9]) { f('#3b2a1a', 1, y0, 14, 5); let x = 1; while (x < 15) { const w = r() < .3 ? 2 : 1; f(cols[Math.floor(r() * cols.length)], x, y0 + (r() < .3 ? 1 : 0), w, 5); x += w; } } }),
+    painting: () => px('painting', 32, 20, f => { f('#6b4a2c', 0, 0, 32, 20); f('#7fc4ec', 2, 2, 28, 16); f('#f5e07a', 22, 4, 4, 3); f('#5aa040', 2, 12, 28, 6); f('#4a8a34', 6, 10, 12, 3); f('#6b4a2c', 10, 6, 2, 6); f('#3f7d24', 6, 4, 10, 4); }),
+    chest: () => px('chest', 16, 14, f => { f('#2b1a0c', 0, 0, 16, 14); f('#a2692e', 1, 1, 14, 12); f('#8a5524', 1, 9, 14, 4); f('#2b1a0c', 1, 5, 14, 1); f('#c9c9c9', 7, 4, 2, 3); f('#c08040', 1, 1, 14, 1); }),
+    crafting: () => px('crafting', 16, 16, f => { f('#8a5d33', 0, 0, 16, 16); f('#b98a4f', 0, 0, 16, 4); f('#7d5c35', 0, 2, 16, 1); f('#7d5c35', 5, 0, 1, 4); f('#7d5c35', 10, 0, 1, 4); f('#9a9a9a', 3, 7, 2, 6); f('#5a3a1a', 3, 11, 2, 3); f('#b0b0b0', 10, 6, 4, 2); f('#5a3a1a', 11, 8, 2, 5); }),
+    furnace: () => px('furnace', 16, 16, f => { const r = rng(37); for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) f(['#7a7a7a', '#6c6c6c', '#858585'][Math.floor(r() * 3)], i, j); f('#1e1e1e', 4, 8, 8, 6); f('#ff9a2e', 5, 11, 6, 3); f('#ffd34a', 6, 12, 4, 2); f('#4a4a4a', 2, 3, 12, 2); }),
+    bed: () => px('bed', 32, 12, f => { f('#5a3a1a', 0, 8, 32, 4); f('#8a5d33', 0, 4, 32, 5); f('#efefef', 1, 3, 8, 5); f('#c43a3a', 9, 3, 23, 6); f('#a12e2e', 9, 7, 23, 2); }),
+    pot: () => px('pot', 8, 12, f => { f('#2f6b1d', 3, 3, 2, 4); f('#d23a3a', 2, 0, 4, 3); f('#ffd34a', 3, 1, 2, 1); f('#8a4b2a', 1, 7, 6, 5); f('#6b3a1e', 1, 7, 6, 1); }),
+    barrel: () => px('barrel', 16, 16, f => { f('#6b4a2c', 0, 0, 16, 16); for (let i = 0; i < 16; i += 3) f('#7d5a36', i, 0, 2, 16); f('#3b3b3b', 0, 3, 16, 1); f('#3b3b3b', 0, 12, 16, 1); }),
+    // 책상 앞 장식
+    flowers: () => px('d-flowers', 32, 12, f => { const cols = ['#d23a3a', '#f2d23a', '#e87ab0', '#3a7ad2', '#f4f4f4', '#9a5ad2']; for (let k = 0; k < 10; k++) { f('#2f6b1d', 1 + k * 3, 4, 1, 4); f(cols[k % cols.length], k * 3, 2, 3, 2); } f('#8a4b2a', 0, 8, 32, 4); f('#6b3a1e', 0, 8, 32, 1); }),
+    tools: () => px('d-tools', 32, 12, f => { for (const x0 of [3, 11, 19]) { f('#7d5a36', x0 + 1, 2, 1, 9); f('#9a9a9a', x0, 1, 3, 2); } f('#5a3a1a', 25, 3, 5, 8); f('#3b2a1a', 26, 4, 3, 2); }),
+    river: () => px('d-river', 32, 12, f => { for (let i = 0; i < 32; i++) { const y = 5 + Math.round(Math.sin(i / 3) * 1.5); f('#3b74d6', i, y, 1, 1); } f('#6fa0e8', 18, 10, 8, 1); }),
+    hay: () => px('d-hay', 32, 12, f => { f('#d6b23a', 10, 1, 12, 11); f('#b8962a', 10, 4, 12, 1); f('#b8962a', 10, 8, 12, 1); f('#b33a3a', 10, 2, 12, 1); f('#b33a3a', 10, 9, 12, 1); }),
+    vines: () => px('d-vines', 32, 12, f => { const r = rng(41); for (let i = 0; i < 32; i += 2) { const h = 2 + Math.floor(r() * 9); f(r() < .5 ? '#3f7d24' : '#4f9a30', i, 0, 1, h); } f('#5fae3e', 26, 8, 4, 3); }),
+    notes: () => px('d-notes', 32, 12, f => { const cols = ['#f6e26a', '#f6a6c8', '#8ad6f0', '#a6e87a', '#f6c06a']; for (let k = 0; k < 6; k++) f(cols[k % 5], 1 + k * 5, 1 + (k % 2) * 4, 4, 4); }),
+    drawers: () => px('d-drawers', 32, 12, f => { f('#b8b8b8', 18, 0, 13, 12); f('#8a8a8a', 18, 5, 13, 1); f('#5a5a5a', 23, 2, 3, 1); f('#5a5a5a', 23, 8, 3, 1); }),
+    // 책상 위 소품
+    gold: () => px('p-gold', 12, 12, f => { f('#8a6a10', 0, 0, 12, 12); f('#f4c542', 1, 1, 10, 10); f('#fff2a8', 1, 1, 10, 2); f('#c99a1c', 1, 9, 10, 2); }),
+    plant: () => px('p-plant', 12, 12, f => { f('#8a4b2a', 3, 8, 6, 4); f('#3f7d24', 2, 2, 8, 6); f('#5fae3e', 4, 0, 4, 4); f('#2e6119', 2, 6, 3, 2); }),
+    crate: () => px('p-crate', 12, 12, f => { f('#5a3a1a', 0, 0, 12, 12); f('#9a6a3a', 1, 1, 10, 10); f('#5a3a1a', 1, 5, 10, 1); f('#5a3a1a', 5, 1, 1, 10); }),
+    fish: () => px('p-fish', 12, 12, f => { f('#cfe8f4', 0, 1, 12, 11); f('#3a8ad2', 1, 5, 10, 6); f('#f29a3a', 3, 6, 4, 2); f('#f29a3a', 7, 6, 1, 1); f('#2a6a3a', 9, 8, 1, 3); }),
+    cat: () => px('p-cat', 12, 12, f => { f('#e0a24a', 2, 4, 8, 8); f('#e0a24a', 2, 2, 2, 2); f('#e0a24a', 8, 2, 2, 2); f('#1e1e1e', 4, 6, 1, 1); f('#1e1e1e', 7, 6, 1, 1); f('#f6c8a0', 5, 8, 2, 1); }),
+    cube: () => px('p-cube', 12, 12, f => { f('#3f9a2a', 1, 2, 10, 10); f('#6fd34a', 2, 3, 8, 8); f('#1e5a12', 3, 6, 2, 2); f('#1e5a12', 7, 6, 2, 2); }),
+    books: () => px('p-books', 12, 12, f => { f('#b33a3a', 1, 9, 10, 3); f('#3a5bb3', 2, 6, 9, 3); f('#3aa04a', 1, 3, 9, 3); f('#efefef', 9, 4, 1, 1); }),
+    duck: () => px('p-duck', 12, 12, f => { f('#f4d23a', 2, 6, 8, 6); f('#f4d23a', 5, 2, 5, 5); f('#f29a2a', 10, 4, 2, 2); f('#1e1e1e', 8, 3, 1, 1); }),
+    ingot: () => px('i-ingot', 12, 12, f => { f('#8a6a10', 1, 4, 10, 5); f('#f4c542', 2, 4, 8, 4); f('#fff2a8', 3, 4, 6, 1); }),
+    banner: (seed) => px('banner-' + seed, 48, 18, f => { f('#f6d6e2', 0, 0, 48, 12); f('#5ea13a', 0, 12, 48, 6); f('#3f7d24', 0, 12, 48, 1); const cols = ['#d23a3a', '#f2d23a', '#3a7ad2', '#9a5ad2', '#e87ab0']; const r = rng(seed); for (let k = 0; k < 8; k++) { const x0 = k * 6 + 1, c = cols[Math.floor(r() * cols.length)]; if (k % 2) { f('#8a4b2a', x0, 6, 4, 4); f('#2f6b1d', x0 + 1, 3, 2, 3); f(c, x0, 1, 4, 3); } else { f('#2f6b1d', x0 + 2, 13, 1, 3); f(c, x0 + 1, 11, 3, 3); } } })
+  };
+  const bg = url => 'url("' + url + '")';
 
   /* ================= 사운드 ================= */
   let soundOn = true, ac = null;
@@ -618,47 +541,36 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
       const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
       o.connect(g); g.connect(ac.destination);
       const set = (w, f1, f2, v, d) => { o.type = w; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(f2, t + d); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + d); o.start(t); o.stop(t + d); };
-      if (type === 'grab') set('triangle', 300, 820, 0.25, 0.1);
-      else if (type === 'drop') set('square', 180, 60, 0.25, 0.12);
-      else if (type === 'click') set('square', 420, 380, 0.12, 0.05);
-      else if (type === 'speak') { const f = 420 + Math.random() * 300; set('sine', f, f * 1.1, 0.18, 0.08); }
-      else if (type === 'xp') set('triangle', 660, 1320, 0.15, 0.15);
-      else if (type === 'open') set('square', 300, 600, 0.1, 0.08);
-      else if (type === 'in') set('square', 520, 1040, 0.12, 0.18);
-      else if (type === 'out') set('square', 900, 300, 0.12, 0.2);
+      if (type === 'grab') set('triangle', 300, 820, 0.22, 0.1);
+      else if (type === 'drop') set('square', 180, 60, 0.22, 0.12);
+      else if (type === 'click') set('square', 420, 380, 0.1, 0.05);
+      else if (type === 'speak') { const fq = 420 + Math.random() * 300; set('sine', fq, fq * 1.1, 0.16, 0.08); }
+      else if (type === 'xp') set('triangle', 660, 1320, 0.14, 0.15);
+      else if (type === 'open') set('square', 300, 600, 0.08, 0.08);
+      else if (type === 'in') set('square', 520, 1040, 0.1, 0.18);
+      else if (type === 'out') set('square', 900, 300, 0.1, 0.2);
     } catch (e) {}
   }
 
   /* ================= 스킨 ================= */
-  const PARTS = {
-    head: [8, 8, 40, 8, 8, 8], body: [20, 20, 20, 36, 8, 12],
-    armR: [44, 20, 44, 36, 4, 12], armL: [36, 52, 52, 52, 4, 12],
-    legR: [4, 20, 4, 36, 4, 12], legL: [20, 52, 4, 52, 4, 12]
-  };
+  const PARTS = { head: [8, 8, 40, 8, 8, 8], body: [20, 20, 20, 36, 8, 12], armR: [44, 20, 44, 36, 4, 12], armL: [36, 52, 52, 52, 4, 12], legR: [4, 20, 4, 36, 4, 12], legL: [20, 52, 4, 52, 4, 12] };
   const SKIN_RE = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
   const skinCache = new Map();
   function defaultSkin(color) {
     const c = document.createElement('canvas'); c.width = 64; c.height = 64;
-    const x = c.getContext('2d');
-    const f = (col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w, h); };
+    const x = c.getContext('2d'); const f = (col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w, h); };
     f('#e8b48c', 8, 8, 8, 8); f('#5b3a22', 8, 8, 8, 2); f('#5b3a22', 8, 10, 1, 2); f('#5b3a22', 15, 10, 1, 2);
     f('#ffffff', 9, 12, 2, 1); f('#ffffff', 13, 12, 2, 1); f('#2a2a5a', 10, 12, 1, 1); f('#2a2a5a', 13, 12, 1, 1); f('#b06a4a', 11, 14, 2, 1);
-    f(color, 20, 20, 8, 12); f('rgba(0,0,0,.18)', 20, 30, 8, 2);
-    f(color, 44, 20, 4, 9); f('#e8b48c', 44, 29, 4, 3); f(color, 36, 52, 4, 9); f('#e8b48c', 36, 61, 4, 3);
+    f(color, 20, 20, 8, 12); f('rgba(0,0,0,.18)', 20, 30, 8, 2); f(color, 44, 20, 4, 9); f('#e8b48c', 44, 29, 4, 3); f(color, 36, 52, 4, 9); f('#e8b48c', 36, 61, 4, 3);
     f('#2f3a5a', 4, 20, 4, 10); f('#3a3a3a', 4, 30, 4, 2); f('#2f3a5a', 20, 52, 4, 10); f('#3a3a3a', 20, 62, 4, 2);
     return c;
   }
   function skinSource(member) {
     const key = member.skin && SKIN_RE.test(member.skin) && member.skin.length < 60000 ? member.skin : 'default:' + member.color;
-    if (!skinCache.has(key)) {
-      skinCache.set(key, new Promise(res => {
-        if (key.startsWith('default:')) return res({ img: defaultSkin(key.slice(8)), tall: true });
-        const img = new Image();
-        img.onload = () => res({ img, tall: img.naturalHeight >= 64 });
-        img.onerror = () => res({ img: defaultSkin('#777777'), tall: true });
-        img.src = key;
-      }));
-    }
+    if (!skinCache.has(key)) skinCache.set(key, new Promise(res => {
+      if (key.startsWith('default:')) return res({ img: defaultSkin(key.slice(8)), tall: true });
+      const img = new Image(); img.onload = () => res({ img, tall: img.naturalHeight >= 64 }); img.onerror = () => res({ img: defaultSkin('#777777'), tall: true }); img.src = key;
+    }));
     return skinCache.get(key);
   }
   function paintPart(canvas, src, part, scale) {
@@ -669,38 +581,30 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
     c.drawImage(src.img, bx, by, w, h, 0, 0, w * scale, h * scale);
     if (ox >= 0) c.drawImage(src.img, ox, oy, w, h, 0, 0, w * scale, h * scale);
   }
-  async function paintFace(canvas, member) { paintPart(canvas, await skinSource(member), 'head', 8); }
-  async function paintBody(canvas, member, scale) {
-    const src = await skinSource(member);
+  async function paintFace(canvas, m) { paintPart(canvas, await skinSource(m), 'head', 8); }
+  async function paintBody(canvas, m, scale) {
+    const src = await skinSource(m);
     canvas.width = 16 * scale; canvas.height = 32 * scale;
     const x = canvas.getContext('2d'); x.imageSmoothingEnabled = false;
-    for (const [p, dx, dy] of [['armR', 0, 8], ['armL', 12, 8], ['legR', 4, 20], ['legL', 8, 20], ['body', 4, 8], ['head', 4, 0]]) {
-      const tmp = document.createElement('canvas'); paintPart(tmp, src, p, scale); x.drawImage(tmp, dx * scale, dy * scale);
-    }
+    for (const [p, dx, dy] of [['armR', 0, 8], ['armL', 12, 8], ['legR', 4, 20], ['legL', 8, 20], ['body', 4, 8], ['head', 4, 0]]) { const tmp = document.createElement('canvas'); paintPart(tmp, src, p, scale); x.drawImage(tmp, dx * scale, dy * scale); }
   }
   function readSkinFile(file) {
     return new Promise((res, rej) => {
       if (!file || file.type !== 'image/png') return rej('PNG 스킨 파일만 올릴 수 있어요.');
       if (file.size > 200000) return rej('파일이 너무 커요. 64×64 스킨 PNG를 올려 주세요.');
-      const url = URL.createObjectURL(file);
-      const img = new Image();
+      const url = URL.createObjectURL(file); const img = new Image();
       img.onload = () => {
         URL.revokeObjectURL(url);
         if (img.naturalWidth !== 64 || (img.naturalHeight !== 64 && img.naturalHeight !== 32)) return rej('마인크래프트 스킨(64×64 또는 64×32) 파일이 아니에요.');
-        const c = document.createElement('canvas'); c.width = 64; c.height = img.naturalHeight;
-        c.getContext('2d').drawImage(img, 0, 0);
-        const data = c.toDataURL('image/png');
-        if (data.length > 60000) return rej('스킨 파일이 너무 커요.');
-        res(data);
+        const c = document.createElement('canvas'); c.width = 64; c.height = img.naturalHeight; c.getContext('2d').drawImage(img, 0, 0);
+        const data = c.toDataURL('image/png'); if (data.length > 60000) return rej('스킨 파일이 너무 커요.'); res(data);
       };
       img.onerror = () => { URL.revokeObjectURL(url); rej('이미지를 읽지 못했어요.'); };
       img.src = url;
     });
   }
 
-  /* ==========================================================
-     저장소 어댑터: claude.ai 저장소 또는 Supabase
-     ========================================================== */
+  /* ================= 저장소 (claude.ai 또는 Supabase) ================= */
   async function claudeStore() {
     let db = null, user = null;
     try { [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]); } catch (e) {}
@@ -709,8 +613,7 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
     const can = user ? await user.can('data.write') : null;
     const dayCol = uid => db.doc('work/' + uid).collection('days');
     return {
-      kind: 'claude', label: 'claude.ai 저장소',
-      myId, isOwner: user ? await user.isOwner() : false, canWrite: !!myId && can !== false, needsLogin: false,
+      kind: 'claude', label: 'claude.ai 저장소', myId, isOwner: user ? await user.isOwner() : false, canWrite: !!myId && can !== false, needsLogin: false,
       onMembers: cb => db.collection('members').onSnapshot(s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), () => cb(null)),
       onContents: cb => db.collection('contents').onSnapshot(s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), () => cb([])),
       onWeek: (uid, cb) => dayCol(uid).orderBy('date', 'desc').limit(14).onSnapshot(s => cb(s.docs.map(d => d.data())), () => {}),
@@ -723,10 +626,7 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
       deleteContent: id => db.doc('contents/' + id).delete()
     };
   }
-
-  function loadScript(src) {
-    return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('script')); document.head.append(s); });
-  }
+  function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('script')); document.head.append(s); }); }
   async function supabaseStore(cfg) {
     await loadScript(SUPABASE_JS);
     const sb = window.supabase.createClient(cfg.url, cfg.key);
@@ -735,11 +635,7 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
     const myId = session ? session.user.id : null;
     let isOwner = false;
     if (myId) { const r = await sb.from('office_admins').select('user_id').eq('user_id', myId); isOwner = !!(r.data && r.data.length); }
-    const chk = r => {
-      if (r.error) throw { code: r.error.code === '42501' || /row-level|permission/i.test(r.error.message) ? 'invalid_argument' : 'unavailable', message: r.error.message };
-      return r.data;
-    };
-    // 바뀐 게 생기면 그 표를 다시 읽어 옴 (작은 팀이라 단순하게)
+    const chk = r => { if (r.error) throw { code: r.error.code === '42501' || /row-level|permission/i.test(r.error.message) ? 'invalid_argument' : 'unavailable', message: r.error.message }; return r.data; };
     function watch(table, filter, fetcher, cb) {
       let alive = true;
       const run = async () => { if (!alive) return; try { cb(await fetcher()); } catch (e) {} };
@@ -750,9 +646,7 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
       return () => { alive = false; sb.removeChannel(ch); clearInterval(iv); };
     }
     return {
-      kind: 'supabase', label: 'Supabase', sb,
-      myId, isOwner, canWrite: !!myId, needsLogin: !myId,
-      email: session ? session.user.email : '',
+      kind: 'supabase', label: 'Supabase', sb, myId, isOwner, canWrite: !!myId, needsLogin: !myId, email: session ? session.user.email : '',
       onMembers: cb => watch('office_members', null, async () => chk(await sb.from('office_members').select('*')), cb),
       onContents: cb => watch('office_contents', null, async () => chk(await sb.from('office_contents').select('*')), rows => cb(rows.map(r => ({ id: r.id, name: r.name, order: r.ord })))),
       onWeek: (uid, cb) => watch('office_days', 'user_id=eq.' + uid, async () => chk(await sb.from('office_days').select('data').eq('user_id', uid).order('date', { ascending: false }).limit(14)), rows => cb(rows.map(r => r.data || {}))),
@@ -771,52 +665,57 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
 
   /* ================= 상태 ================= */
   const S = {
-    store: null, myId: null, isOwner: false, readOnly: true,
+    store: null, myId: null, isOwner: false, readOnly: true, cfgFound: false,
     members: new Map(), contents: [], loaded: false, slow: false,
-    statusFor: null, week: [], weekFor: null, weekUnsub: null,
+    view: 'all', drawerFor: null, week: [], weekFor: null, weekUnsub: null,
     editing: false, draftSkin: null
   };
   const myMember = () => S.myId ? S.members.get(S.myId) : null;
   const sortedMembers = () => [...S.members.entries()].map(([id, m]) => ({ id, ...m })).sort((a, b) => (a.desk < 0) - (b.desk < 0) || a.desk - b.desk || (a.joined || 0) - (b.joined || 0));
+  const crew = () => sortedMembers().filter(m => m.approved);
+  const pendingList = () => sortedMembers().filter(m => !m.approved);
   const deskOwner = i => { for (const [id, m] of S.members) if (m.approved && m.desk === i) return { id, ...m }; return null; };
-  const crew = () => sortedMembers().filter(m => m.approved);           // 승인된 동부원
-  const pendingList = () => sortedMembers().filter(m => !m.approved);   // 입사 신청 (사장 화면에서만 보임)
   const usesApproval = () => S.store && S.store.kind === 'supabase';
+  const openTasks = m => (m.tasks || []).filter(t => t.p < 100).sort((a, b) => (b.upd || b.added || 0) - (a.upd || a.added || 0));
+  const doneTasks = m => (m.tasks || []).filter(t => t.p === 100).sort((a, b) => (b.at || 0) - (a.at || 0));
+  const currentTask = m => openTasks(m)[0] || null;
+  const avgP = list => list.length ? Math.round(list.reduce((a, t) => a + t.p, 0) / list.length) : 0;
+  const working = m => m.status === 'in' && !!currentTask(m);
   function todayOf(m, now = Date.now()) {
     const today = dateKey(now);
     const day = m.day && m.day.date === today ? m.day : { date: today, ms: 0, done: 0 };
     const running = m.status === 'in' && m.since ? now - m.since : 0;
-    return { ms: (day.ms || 0) + running, done: day.done || 0, firstIn: day.firstIn || (m.status === 'in' ? m.since : null), lastOut: day.lastOut || null };
+    return { ms: (day.ms || 0) + running, done: day.done || 0, lastOut: day.lastOut || null };
   }
-  const avgP = list => list.length ? Math.round(list.reduce((a, t) => a + t.p, 0) / list.length) : 0;
+  function inView(m) { return S.view === 'all' || (m.tasks || []).some(t => t.c === S.view); }
 
   function normMember(id, d) {
     d = d || {};
-    const tasks = Array.isArray(d.tasks) ? d.tasks.filter(t => t && typeof t.t === 'string').map(t => {
-      const p = t.p == null ? (t.d ? 100 : 0) : clampP(t.p);
-      return { id: clip(t.id, 20) || uidShort(), t: clip(t.t, 60), c: clip(t.c, 30), p, at: Number(t.at) || null, added: Number(t.added) || null };
-    }) : [];
+    const tasks = Array.isArray(d.tasks) ? d.tasks.filter(t => t && typeof t.t === 'string').map(t => ({
+      id: clip(t.id, 20) || uidShort(), t: clip(t.t, 60), c: clip(t.c, 30),
+      p: t.p == null ? (t.d ? 100 : 0) : clampP(t.p), at: Number(t.at) || null, added: Number(t.added) || null, start: Number(t.start) || null, upd: Number(t.upd) || null
+    })) : [];
     const day = d.day && typeof d.day === 'object' ? { date: String(d.day.date || ''), ms: Number(d.day.ms) || 0, done: Number(d.day.done) || 0, firstIn: Number(d.day.firstIn) || null, lastOut: Number(d.day.lastOut) || null } : null;
+    const log = Array.isArray(d.log) ? d.log.filter(x => x && x.m).map(x => ({ t: Number(x.t) || 0, m: clip(x.m, 90) })).slice(-40) : [];
     return {
       name: clip(d.name, 12) || '팀원', role: clip(d.role, 10), quote: clip(d.quote, 40),
       desk: Number.isInteger(d.desk) && d.desk >= -1 && d.desk <= 7 ? d.desk : -1,
-      skin: typeof d.skin === 'string' ? d.skin : '',
-      color: /^#[0-9a-f]{6}$/i.test(d.color || '') ? d.color : hashColor(id),
-      status: d.status === 'in' || d.status === 'out' ? d.status : 'none',
-      since: Number(d.since) || null, day, tasks, joined: Number(d.joined) || 0,
-      approved: d.approved !== false
+      skin: typeof d.skin === 'string' ? d.skin : '', color: /^#[0-9a-f]{6}$/i.test(d.color || '') ? d.color : hashColor(id),
+      status: d.status === 'in' || d.status === 'out' ? d.status : 'none', since: Number(d.since) || null,
+      day, tasks, log, joined: Number(d.joined) || 0, approved: d.approved !== false
     };
   }
-  const plainTasks = m => (m.tasks || []).map(t => ({ id: t.id, t: t.t, c: t.c, p: t.p, at: t.at, added: t.added }));
+  const plainTasks = m => (m.tasks || []).map(t => ({ id: t.id, t: t.t, c: t.c, p: t.p, at: t.at, added: t.added, start: t.start, upd: t.upd }));
+  const withLog = (m, msg) => (m.log || []).concat([{ t: Date.now(), m: clip(msg, 90) }]).slice(-40);
 
-  /* ================= 쓰기 (한 번에 하나씩) ================= */
+  /* ================= 쓰기 ================= */
   let writeChain = Promise.resolve();
   function queueWrite(fn) {
     const p = writeChain.then(fn);
     writeChain = p.catch(() => {});
     return p.catch(err => {
       const code = err && err.code;
-      if (code === 'invalid_argument') { log('저장 권한이 없어요. 로그인 상태나 공유 권한을 확인해 주세요.'); }
+      if (code === 'invalid_argument') log('저장 권한이 없어요. 로그인 상태나 승인 여부를 확인해 주세요.');
       else if (code === 'quota_exceeded') log('저장 공간이 가득 찼어요.');
       else log('저장하지 못했어요. 잠시 뒤 다시 해 주세요.');
       throw err;
@@ -829,19 +728,17 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
       const cur = await S.store.getDay(S.myId, date);
       const d = cur ? JSON.parse(JSON.stringify(cur)) : { date, sessions: [], done: [], ms: 0 };
       d.sessions = Array.isArray(d.sessions) ? d.sessions : []; d.done = Array.isArray(d.done) ? d.done : [];
-      fn(d);
-      d.sessions = d.sessions.slice(-40); d.done = d.done.slice(-100);
+      fn(d); d.sessions = d.sessions.slice(-40); d.done = d.done.slice(-100);
       await S.store.setDay(S.myId, date, d);
     });
   }
-
   async function clockIn() {
     const m = myMember(); if (!m || m.status === 'in') return;
     const now = Date.now(), today = dateKey(now);
     const day = freshDay(m, today); if (!day.firstIn) day.firstIn = now;
     beep('in');
     try {
-      await saveMember({ status: 'in', since: now, day });
+      await saveMember({ status: 'in', since: now, day, log: withLog(m, '출근') });
       await editDay(today, d => { d.sessions.push({ in: now, out: null }); });
       const mob = mobs.get(S.myId); if (mob) say(mob, hhmm(now) + ' 출근했습니다!');
     } catch (e) {}
@@ -852,160 +749,187 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
     const day = freshDay(m, inDate); if (!day.firstIn) day.firstIn = inAt;
     day.ms = (day.ms || 0) + dur; day.lastOut = now;
     beep('out');
+    const report = '오늘 ' + fmtDur(day.ms) + ' 근무, 업무 ' + (day.done || 0) + '개 완료';
     try {
-      await saveMember({ status: 'out', since: now, day });
-      await editDay(inDate, d => {
-        const open = d.sessions.slice().reverse().find(s => !s.out);
-        if (open) open.out = now; else d.sessions.push({ in: inAt, out: now });
-        d.ms = (d.ms || 0) + dur;
-      });
-      const report = '오늘 ' + fmtDur(day.ms) + ' 근무, 업무 ' + (day.done || 0) + '개 완료!';
-      const mob = mobs.get(S.myId); if (mob) say(mob, '퇴근! ' + report);
+      await saveMember({ status: 'out', since: now, day, log: withLog(m, '퇴근 · ' + report) });
+      await editDay(inDate, d => { const open = d.sessions.slice().reverse().find(s => !s.out); if (open) open.out = now; else d.sessions.push({ in: inAt, out: now }); d.ms = (d.ms || 0) + dur; });
       log(m.name + ' 퇴근 리포트: ' + report);
     } catch (e) {}
   }
-
   async function setProgress(taskId, p) {
     const m = myMember(); if (!m) return;
     const now = Date.now(), today = dateKey(now);
-    const tasks = plainTasks(m);
-    const t = tasks.find(x => x.id === taskId); if (!t) return;
+    const tasks = plainTasks(m); const t = tasks.find(x => x.id === taskId); if (!t) return;
     p = clampP(p); if (t.p === p) return;
     const was = t.p === 100, wasToday = was && t.at && dateKey(t.at) === today, now100 = p === 100;
-    t.p = p; t.at = now100 ? (was ? t.at : now) : null;
+    t.p = p; t.upd = now; if (p > 0 && !t.start) t.start = now; t.at = now100 ? (was ? t.at : now) : null;
     const day = freshDay(m, today);
-    if (now100 && !was) { day.done = (day.done || 0) + 1; beep('xp'); }
-    else if (!now100 && wasToday) day.done = Math.max(0, (day.done || 0) - 1);
-    else beep('click');
+    if (now100 && !was) { day.done = (day.done || 0) + 1; beep('xp'); } else if (!now100 && wasToday) day.done = Math.max(0, (day.done || 0) - 1); else beep('click');
+    const msg = now100 ? '완료: ' + t.t : t.t + ' ' + p + '%';
     try {
-      await saveMember({ tasks, day });
-      if ((now100 && !was) || (!now100 && wasToday)) await editDay(today, d => {
-        d.done = d.done.filter(x => x.id !== t.id);
-        if (now100) d.done.push({ id: t.id, t: t.t, c: t.c || '' });
-      });
+      await saveMember({ tasks, day, log: withLog(m, msg) });
+      if ((now100 && !was) || (!now100 && wasToday)) await editDay(today, d => { d.done = d.done.filter(x => x.id !== t.id); if (now100) d.done.push({ id: t.id, t: t.t, c: t.c || '' }); });
       if (now100 && !was) { const mob = mobs.get(S.myId); if (mob) say(mob, '“' + t.t + '” 완료!'); }
     } catch (e) {}
   }
   async function addTask(text, contentId) {
     const m = myMember(); const t = clip(text, 60); if (!m || !t) return;
-    const tasks = plainTasks(m).concat([{ id: uidShort(), t, c: clip(contentId, 30), p: 0, at: null, added: Date.now() }]).slice(-80);
+    const now = Date.now();
+    const tasks = plainTasks(m).concat([{ id: uidShort(), t, c: clip(contentId, 30), p: 0, at: null, added: now, start: null, upd: now }]).slice(-80);
     beep('click');
-    try { await saveMember({ tasks }); } catch (e) {}
+    try { await saveMember({ tasks, log: withLog(m, '새 업무: ' + t) }); } catch (e) {}
   }
   async function removeTask(taskId) {
     const m = myMember(); if (!m) return;
     try { await saveMember({ tasks: plainTasks(m).filter(x => x.id !== taskId) }); } catch (e) {}
   }
   async function addContent(name) {
-    name = clip(name, 20); if (!name) return;
+    name = clip(name, 20); if (!name || !S.store) return;
     const order = Math.max(0, ...S.contents.map(c => c.order || 0)) + 1;
     try { await queueWrite(() => S.store.addContent('c' + uidShort(), { name, order })); log('새 컨텐츠: ' + name); beep('xp'); } catch (e) {}
   }
 
-  /* ================= 알림 ================= */
   function log(text) {
     const ul = $('log');
     ul.prepend(el('li', null, el('time', { text: hhmm(Date.now()) }), el('span', { text })));
     while (ul.children.length > 40) ul.lastChild.remove();
   }
 
+  /* ================= 사무실 무대 ================= */
+  const office = $('office');
+  function themeFor(view) {
+    if (view === 'all') return THEMES[0];
+    const i = S.contents.findIndex(c => c.id === view);
+    return THEMES[1 + ((i < 0 ? 0 : i) % (THEMES.length - 1))];
+  }
+  let decorBuilt = false;
+  function renderStage() {
+    const th = themeFor(S.view);
+    office.style.backgroundImage = bg(T[th.floor]());
+    $('l-wall').style.backgroundImage = bg(T[th.wall]());
+    $('l-vines').style.backgroundImage = th.vines ? bg(T.leaves()) : 'none';
+    $('l-vines').hidden = !th.vines;
+    $('l-path').style.backgroundImage = bg(T.dirt());
+    $('l-bottom').style.backgroundImage = bg(T.dirt());
+    $('l-log-l').style.backgroundImage = bg(T.log());
+    $('l-log-r').style.backgroundImage = bg(T.log());
+    if (decorBuilt) return;
+    decorBuilt = true;
+    const d = $('decor');
+    const put = (url, left, top, w, h, extra) => d.append(el('img', { class: 'spr', src: url, alt: '', style: 'left:' + left + ';top:' + top + ';width:' + w + 'px;height:' + h + 'px;' + (extra || '') }));
+    // 벽 장식
+    put(SPR.window(), '9%', '22px', 72, 60); put(SPR.lantern(), '22%', '8px', 24, 42);
+    put(SPR.bookshelf(), '28%', 'calc(20% - 104px)', 48, 48); put(SPR.bookshelf(), 'calc(28% + 48px)', 'calc(20% - 104px)', 48, 48);
+    put(SPR.bookshelf(), '28%', 'calc(20% - 56px)', 48, 48); put(SPR.bookshelf(), 'calc(28% + 48px)', 'calc(20% - 56px)', 48, 48);
+    put(SPR.lantern(), '41%', '8px', 24, 42); put(SPR.window(), '47%', '22px', 72, 60); put(SPR.lantern(), '59%', '8px', 24, 42);
+    put(SPR.painting(), '65%', '26px', 96, 60); put(SPR.lantern(), '77%', '8px', 24, 42); put(SPR.window(), '84%', '22px', 72, 60);
+    // 바닥 가구 줄
+    const by = 'calc(97.8% - 48px)';
+    put(SPR.pot(), '7%', 'calc(97.8% - 36px)', 24, 36);
+    put(SPR.chest(), '15%', 'calc(97.8% - 42px)', 48, 42); put(SPR.chest(), 'calc(15% + 48px)', 'calc(97.8% - 42px)', 48, 42);
+    put(SPR.barrel(), '30%', by, 48, 48); put(SPR.crafting(), 'calc(30% + 48px)', by, 48, 48);
+    put(SPR.furnace(), '45%', by, 48, 48);
+    put(SPR.bookshelf(), '58%', by, 48, 48);
+    put(SPR.bed(), '70%', 'calc(97.8% - 36px)', 96, 36);
+    put(SPR.bookshelf(), '86%', by, 48, 48); put(SPR.pot(), '91%', 'calc(97.8% - 36px)', 24, 36);
+    // 잔디 위 작은 꽃
+    const r = rng(77), cols = ['#d23a3a', '#f2d23a', '#3a7ad2', '#9a5ad2', '#f4f4f4'];
+    for (let k = 0; k < 22; k++) d.append(el('div', { class: 'flower', style: 'left:' + (7 + r() * 86).toFixed(1) + '%;top:' + (23 + r() * 54).toFixed(1) + '%;--c:' + cols[Math.floor(r() * cols.length)] }));
+  }
+
   /* ================= 캐릭터 ================= */
   const mobs = new Map();
-  const office = $('office');
+  const tip = $('mtip');
+  function showTip(mob) {
+    const m = mob.member; if (!m) return;
+    const t = currentTask(m);
+    tip.replaceChildren(
+      el('div', { class: 'n', text: m.name }),
+      el('div', { text: m.role || '팀원' }),
+      el('div', { text: m.npc ? '아직 등록 전' : m.status !== 'in' ? (m.status === 'out' ? '퇴근' : '출근 전') : t ? '작업 중 · ' + t.t + ' ' + t.p + '%' : '대기 중' }));
+    tip.style.left = Math.min(mob.x + 3, 72) + '%';
+    tip.style.top = 'calc(' + mob.y + '% - 132px)';
+    tip.hidden = false;
+  }
+  function hideTip() { tip.hidden = true; }
   function makeMob(id) {
     const bubble = el('div', { class: 'bubble', hidden: true });
-    const tag = el('div', { class: 'nametag' });
+    const tag = el('div', { class: 'nm-tag' });
+    const wbar = el('div', { class: 'wbar', hidden: true }, el('i'));
     const cls = { armR: 'arm-r', armL: 'arm-l', legR: 'leg-r', legL: 'leg-l', body: 'body', head: 'head' };
     const parts = ['armR', 'armL', 'legR', 'legL', 'body', 'head'].map(p => el('canvas', { class: 'part ' + cls[p], 'data-part': p }));
-    const node = el('div', { class: 'mob idle', role: 'button', tabindex: '0' }, bubble, tag, el('div', { class: 'figure' }, parts));
+    const node = el('div', { class: 'mob idle', role: 'button', tabindex: '0' }, bubble, tag, wbar, el('div', { class: 'figure' }, parts));
     $('mobs').append(node);
-    const mob = { id, el: node, bubble, tag, parts, x: 50, y: 60, anim: null, skinKey: null, timer: null, lastTap: 0 };
+    const mob = { id, el: node, bubble, tag, wbar, parts, x: 50, y: 60, anim: null, skinKey: null, timer: null, lastTap: 0 };
     bindDrag(mob);
-    node.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStatus(id); } });
+    node.addEventListener('pointerenter', () => { if (!dragging) showTip(mob); });
+    node.addEventListener('pointerleave', hideTip);
+    node.addEventListener('focus', () => showTip(mob)); node.addEventListener('blur', hideTip);
+    node.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDrawer(id); } });
     mobs.set(id, mob);
     return mob;
   }
-  async function dressMob(mob, member) {
-    const key = (member.skin || '') + '|' + member.color;
-    if (mob.skinKey === key) return;
-    mob.skinKey = key;
-    const src = await skinSource(member);
-    mob.parts.forEach(c => paintPart(c, src, c.dataset.part, 4));
+  async function dressMob(mob, m) {
+    const key = (m.skin || '') + '|' + m.color; if (mob.skinKey === key) return; mob.skinKey = key;
+    const src = await skinSource(m); mob.parts.forEach(c => paintPart(c, src, c.dataset.part, 3));
   }
   function placeMob(mob) { mob.el.style.left = mob.x + '%'; mob.el.style.top = mob.y + '%'; mob.el.style.zIndex = Math.round(mob.y * 10); }
-  function say(mob, text) {
-    mob.bubble.textContent = text; mob.bubble.hidden = false; beep('speak');
-    clearTimeout(mob.timer); mob.timer = setTimeout(() => { mob.bubble.hidden = true; }, 3600);
-  }
+  function say(mob, text) { mob.bubble.textContent = text; mob.bubble.hidden = false; beep('speak'); clearTimeout(mob.timer); mob.timer = setTimeout(() => { mob.bubble.hidden = true; }, 3600); }
   function walkTo(mob, tx, ty, done) {
     cancelWalk(mob);
     const r = office.getBoundingClientRect();
     const dist = Math.hypot((tx - mob.x) / 100 * r.width, (ty - mob.y) / 100 * r.height);
-    if (dist < 2) { done && done(); return; }
+    if (dist < 2) { mob.x = tx; mob.y = ty; placeMob(mob); done && done(); return; }
     const dur = dist / 90 * 1000, sx = mob.x, sy = mob.y, t0 = performance.now();
-    mob.el.classList.remove('idle'); mob.el.classList.add('walking');
-    mob.el.classList.toggle('facing-left', tx < sx);
+    mob.el.classList.remove('idle'); mob.el.classList.add('walking'); mob.el.classList.toggle('facing-left', tx < sx);
     const step = now => {
       const k = Math.min(1, (now - t0) / dur);
       mob.x = sx + (tx - sx) * k; mob.y = sy + (ty - sy) * k; placeMob(mob);
       if (k < 1) mob.anim = requestAnimationFrame(step);
-      else { mob.anim = null; mob.el.classList.remove('walking'); mob.el.classList.add('idle'); done && done(); }
+      else { mob.anim = null; mob.el.classList.remove('walking', 'facing-left'); mob.el.classList.add('idle'); done && done(); }
     };
     mob.anim = requestAnimationFrame(step);
   }
   function cancelWalk(mob) { if (mob.anim) cancelAnimationFrame(mob.anim); mob.anim = null; mob.el.classList.remove('walking'); }
-  function homeOf(mob) { const m = mob.member; if (m && m.desk >= 0) return seatOf(m.desk); return { x: 10 + (Math.abs(hashNum(mob.id)) % 80), y: 92 }; }
+  function homeOf(mob) { const m = mob.member; if (m && m.desk >= 0) return seatOf(m.desk); return { x: 10 + (hashNum(mob.id) % 80), y: 76 }; }
 
   let dragging = null;
   function bindDrag(mob) {
     mob.el.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      cancelWalk(mob);
+      e.preventDefault(); cancelWalk(mob); hideTip();
       mob.el.setPointerCapture(e.pointerId);
       dragging = { mob, id: e.pointerId, r: office.getBoundingClientRect(), sx: e.clientX, sy: e.clientY, moved: false };
-      mob.el.classList.remove('idle'); mob.el.classList.add('dragging');
-      mob.el.style.zIndex = 2000;
+      mob.el.classList.remove('idle'); mob.el.classList.add('dragging'); mob.el.style.zIndex = 3000;
     });
     mob.el.addEventListener('pointermove', e => {
       if (!dragging || dragging.mob !== mob || e.pointerId !== dragging.id) return;
       const r = dragging.r;
-      if (!dragging.moved && Math.hypot(e.clientX - dragging.sx, e.clientY - dragging.sy) > 6) {
-        dragging.moved = true; beep('grab');
-        say(mob, pick(mob.member && mob.member.desk === 0 ? LINES.bossGrab : LINES.grab));
-      }
+      if (!dragging.moved && Math.hypot(e.clientX - dragging.sx, e.clientY - dragging.sy) > 6) { dragging.moved = true; beep('grab'); say(mob, pick(mob.member && mob.member.desk === 0 ? LINES.bossGrab : LINES.grab)); }
       if (!dragging.moved) return;
-      let x = (e.clientX - r.left) / r.width * 100, y = (e.clientY - r.top + 60) / r.height * 100;
-      x = Math.max(4, Math.min(96, x)); y = Math.max(26, Math.min(99, y));
-      if (x < mob.x - 0.3) mob.el.classList.add('facing-left'); else if (x > mob.x + 0.3) mob.el.classList.remove('facing-left');
+      let x = (e.clientX - r.left) / r.width * 100, y = (e.clientY - r.top + 48) / r.height * 100;
+      x = Math.max(6, Math.min(94, x)); y = Math.max(28, Math.min(84, y));
       mob.x = x; mob.y = y; mob.el.style.left = x + '%'; mob.el.style.top = y + '%';
     });
     const end = e => {
       if (!dragging || dragging.mob !== mob || e.pointerId !== dragging.id) return;
       const moved = dragging.moved; dragging = null;
-      mob.el.classList.remove('dragging'); mob.el.classList.add('idle');
-      placeMob(mob);
+      mob.el.classList.remove('dragging'); mob.el.classList.add('idle'); placeMob(mob);
       if (!moved) {
         const now = performance.now();
-        if (now - mob.lastTap < 380) { mob.lastTap = 0; mob.bubble.hidden = true; openStatus(mob.id); }
-        else { mob.lastTap = now; say(mob, pick(mob.lines || LINES.poke)); }
+        if (now - mob.lastTap < 380) { mob.lastTap = 0; mob.bubble.hidden = true; openDrawer(mob.id); }
+        else { mob.lastTap = now; showTip(mob); say(mob, pick(mob.lines || LINES.poke)); }
         return;
       }
-      beep('drop');
-      const r = office.getBoundingClientRect();
-      let best = null, bd = 70;
-      DESKS.forEach((d, i) => { const s = seatOf(i); const dd = Math.hypot((s.x - mob.x) / 100 * r.width, (s.y - mob.y) / 100 * r.height); if (dd < bd) { bd = dd; best = s; } });
-      if (best) { mob.x = best.x; mob.y = best.y; placeMob(mob); }
-      say(mob, pick(LINES.drop));
+      beep('drop'); say(mob, pick(LINES.drop));
+      setTimeout(() => { const h = homeOf(mob); walkTo(mob, h.x, h.y); }, 1200);
     };
-    mob.el.addEventListener('pointerup', end);
-    mob.el.addEventListener('pointercancel', end);
+    mob.el.addEventListener('pointerup', end); mob.el.addEventListener('pointercancel', end);
   }
-
-  function npcBoss() { return { name: '후케이', role: '사장', desk: 0, skin: BOSS_SKIN, color: '#7fb0aa', npc: true, quote: '', status: 'in', tasks: [] }; }
+  function npcBoss() { return { name: '후케이', role: '사장', desk: 0, skin: BOSS_SKIN, color: '#7fb0aa', npc: true, quote: '', status: 'in', tasks: [], log: [] }; }
   function syncMobs() {
     const want = new Map();
     for (const m of crew()) if (m.status === 'in') want.set(m.id, m);
-    if (!deskOwner(0)) want.set(NPC_ID, npcBoss());
+    if (!deskOwner(0) && S.loaded) want.set(NPC_ID, npcBoss());
     for (const [id, mob] of mobs) if (!want.has(id)) { cancelWalk(mob); mob.el.remove(); mobs.delete(id); }
     for (const [id, m] of want) {
       let mob = mobs.get(id), fresh = false;
@@ -1013,164 +937,138 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
       const prevDesk = mob.member && mob.member.desk;
       mob.member = m;
       mob.lines = m.quote ? [m.quote].concat(LINES.poke) : LINES.poke;
-      mob.tag.textContent = '';
-      mob.tag.append(document.createTextNode(m.name || '팀원'));
-      if (m.role) mob.tag.append(' ', el('em', { text: '[' + m.role + ']' }));
+      mob.tag.textContent = m.name;
       mob.el.classList.toggle('me', id === S.myId);
-      mob.el.setAttribute('aria-label', (m.name || '팀원') + (m.role ? ', ' + m.role : '') + '. 두 번 누르면 상태창이 열려요');
+      mob.el.classList.toggle('dim', !m.npc && !inView(m));
+      mob.el.setAttribute('aria-label', m.name + (m.role ? ', ' + m.role : '') + '. 두 번 누르면 상태창');
+      const t = currentTask(m);
+      mob.wbar.hidden = !t; if (t) mob.wbar.firstChild.style.width = t.p + '%';
       dressMob(mob, m);
-      if (fresh) {
-        const h = homeOf(mob);
-        if (m.npc || !S.loaded) { mob.x = h.x; mob.y = h.y; placeMob(mob); }
-        else { mob.x = 4; mob.y = 96; placeMob(mob); walkTo(mob, h.x, h.y); }
-      } else if (prevDesk !== m.desk) { const h = homeOf(mob); walkTo(mob, h.x, h.y); }
+      if (fresh) { const h = homeOf(mob); if (m.npc || !S.loaded) { mob.x = h.x; mob.y = h.y; placeMob(mob); } else { mob.x = 6; mob.y = 82; placeMob(mob); walkTo(mob, h.x, h.y); } }
+      else if (prevDesk !== m.desk) { const h = homeOf(mob); walkTo(mob, h.x, h.y); }
     }
   }
   setInterval(() => {
     if (document.hidden || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     for (const mob of mobs.values()) {
-      if (mob.anim || (dragging && dragging.mob === mob) || Math.random() < 0.7) continue;
-      if (Math.random() < 0.45) { const h = homeOf(mob); walkTo(mob, h.x, h.y); }
-      else walkTo(mob, 8 + Math.random() * 84, 40 + Math.random() * 56);
+      if (mob.anim || (dragging && dragging.mob === mob) || Math.random() < 0.9) continue;
+      const h = homeOf(mob);
+      const atHome = Math.abs(mob.x - h.x) < 1 && Math.abs(mob.y - h.y) < 1;
+      if (atHome) walkTo(mob, 10 + Math.random() * 80, 72 + Math.random() * 6, () => setTimeout(() => walkTo(mob, h.x, h.y), 2500));
+      else walkTo(mob, h.x, h.y);
     }
-  }, 4500);
+  }, 5000);
 
-  /* ================= 책상·핫바 ================= */
-  function hotCaption(text) { $('hotbar-caption').textContent = text; }
+  /* ================= 책상 ================= */
   function renderDesks() {
     const wrap = $('desks'); wrap.innerHTML = '';
     DESKS.forEach((d, i) => {
-      const o = deskOwner(i), npc = i === 0 && !o, occupied = !!o || npc;
+      const o = deskOwner(i), npc = i === 0 && !o && S.loaded, occupied = !!o || npc;
       const isIn = npc || (o && o.status === 'in');
       const name = o ? o.name : (npc ? '후케이' : '');
-      const top = el('div', { class: 'desk-top' });
-      if (d.boss) top.append(el('div', { class: 'plant' }), el('div', { class: 'monitor' + (isIn ? '' : ' off') }, el('div', { class: 'screen-text', text: isIn ? 'CEO' : '' })), el('div', { class: 'gold-block' }));
-      else if (!occupied) top.append(el('div', { class: 'paper', text: '모집 중' }));
-      else if (!isIn) top.append(el('div', { class: 'monitor off' }), el('div', { class: 'paper off', text: o.status === 'out' ? '퇴근' : '미출근' }));
-      else top.append(el('div', { class: 'monitor' }, el('div', { class: 'screen-text', text: '>_' })));
-      const front = el('div', { class: 'desk-front' });
-      if (d.boss) front.append(el('span', { class: 'plate', text: '사장 ' + name }));
-      const label = d.boss ? '사장실' + (name ? ' · ' + name : '') : (occupied ? name : '빈자리 ' + d.label);
+      const items = el('div', { class: 'dk-items' },
+        d.l !== 'none' ? el('img', { class: 'dk-prop l', src: SPR[d.l](), alt: '' }) : null,
+        el('div', { class: 'dk-mon' + (isIn ? ' on' : '') + (d.boss && isIn ? ' boss-on' : '') }),
+        d.r !== 'none' ? el('img', { class: 'dk-prop r', src: SPR[d.r](), alt: '' }) : null);
+      const label = d.boss ? '사장실' + (name ? ' · ' + name : '') : occupied ? name + (o && o.status !== 'in' ? (o.status === 'out' ? ' · 퇴근' : ' · 미출근') : '') : '빈자리 ' + d.label;
       wrap.append(el('button', {
-        type: 'button', class: 'desk ' + (d.boss ? 'boss' : '') + (occupied ? ' taken' : ' empty') + (o && o.id === S.statusFor ? ' selected' : ''),
-        style: 'left:' + d.x + '%;top:' + d.y + '%;z-index:' + Math.round((d.y + 9) * 10),
+        type: 'button', class: 'desk' + (d.boss ? ' boss' : '') + (occupied ? '' : ' empty') + (o && o.id === S.drawerFor ? ' sel' : '') + (o && !inView(o) ? ' dim' : ''),
+        style: 'left:' + d.x + '%;top:' + d.y + '%;z-index:' + Math.round((d.y + 12) * 10),
         'aria-label': occupied ? label + ' 자리, 상태창 열기' : '빈자리 ' + d.label,
-        onclick: () => { beep('click'); if (o) openStatus(o.id); else if (npc) openStatus(NPC_ID); else hotCaption('빈자리 ' + d.label + ': 새 팀원을 기다리는 중'); }
-      }, top, front, d.boss ? null : el('div', { class: 'chair' }), el('div', { class: 'desk-label', text: label })));
+        onclick: () => { beep('click'); if (o) openDrawer(o.id); else if (npc) openDrawer(NPC_ID); }
+      }, items, el('div', { class: 'dk-top' }), el('div', { class: 'dk-front' }, el('img', { src: SPR[d.front](), alt: '' })), el('div', { class: 'dk-legs' }), el('div', { class: 'dk-label', text: label })));
     });
   }
-  function renderHotbar() {
-    const bar = $('hotbar'); bar.innerHTML = '';
-    DESKS.forEach((d, i) => {
-      const o = deskOwner(i);
-      const m = o || (i === 0 ? npcBoss() : null);
-      const b = el('button', {
-        type: 'button', class: 'slot' + (o && o.id === S.statusFor ? ' active' : '') + (m && m.status !== 'in' ? ' out' : ''),
-        'aria-label': (i + 1) + '번: ' + (m ? m.name + ' 상태창' : '빈자리'),
-        onclick: () => { beep('click'); if (o) openStatus(o.id); else if (i === 0) openStatus(NPC_ID); else hotCaption('빈자리 ' + d.label + ': 새 팀원을 기다리는 중'); }
-      });
-      if (m) { const c = el('canvas'); paintFace(c, m); b.append(c); if (o && o.status === 'in') b.append(el('span', { class: 'dot' })); }
-      else b.append(el('span', { class: 'q', text: '?' }));
-      b.append(el('span', { class: 'num', text: String(i + 1) }));
-      bar.append(b);
-    });
+
+  /* ================= 탭·진행 바·상태줄 ================= */
+  function renderTabs() {
+    const tabs = $('tabs'); tabs.innerHTML = '';
+    const list = crew();
+    const mk = (id, name, count) => el('button', {
+      type: 'button', class: 'tab', role: 'tab', 'aria-selected': String(S.view === id),
+      onclick: () => { if (S.view === id) return; S.view = id; beep('click'); renderAll(); }
+    }, el('span', { text: name }), el('span', { class: 'cnt' + (count ? ' on' : ''), text: String(count) }));
+    tabs.append(mk('all', '전체 사무실', list.filter(working).length));
+    for (const c of S.contents) tabs.append(mk(c.id, c.name, list.filter(m => m.status === 'in' && openTasks(m).some(t => t.c === c.id)).length));
+    if (myMember() && myMember().approved && !S.readOnly) tabs.append(el('button', { type: 'button', class: 'tab add', onclick: () => { $('add-content').hidden = false; $('new-content').focus(); }, text: '+ 컨텐츠' }));
+  }
+  function renderProgress() {
+    const list = crew();
+    const tasks = list.flatMap(m => (m.tasks || []).filter(t => S.view === 'all' || t.c === S.view));
+    const pct = avgP(tasks), done = tasks.filter(t => t.p === 100).length;
+    const people = new Set(list.filter(m => (m.tasks || []).some(t => S.view === 'all' || t.c === S.view)).map(m => m.id)).size;
+    const name = S.view === 'all' ? '전체' : (S.contents.find(c => c.id === S.view) || {}).name || '컨텐츠';
+    const p = $('ptxt'); p.textContent = '';
+    p.append(name + ' ', el('b', { text: pct + '%' }), ' · 업무 ', el('strong', { text: done + '/' + tasks.length }), ' 완료 · 참여 ' + people + '명 · 근무 중 ' + list.filter(m => m.status === 'in').length + '명');
+    const bar = $('pbar'); bar.innerHTML = '';
+    for (let k = 0; k < 10; k++) bar.append(el('i', { class: pct >= (k + 1) * 10 ? 'on' : '' }));
+    bar.setAttribute('role', 'img'); bar.setAttribute('aria-label', name + ' 진행도 ' + pct + '%');
+  }
+  function renderStatusbar() {
+    const list = crew();
+    const inN = list.filter(m => m.status === 'in').length, work = list.filter(working).length;
+    const seats = DESKS.filter((d, i) => deskOwner(i)).length;
+    const openN = list.reduce((a, m) => a + openTasks(m).length, 0);
+    $('sb-left').textContent = '작업 ' + work + ' · 대기 ' + (inN - work) + ' · 퇴근·미출근 ' + (list.length - inN) + ' · 자리 ' + seats + '/' + DESKS.length + ' · 진행 업무 ' + openN;
+    $('sb-right').textContent = S.store ? S.store.label : '저장소 없음';
   }
 
   /* ================= 내 자리 ================= */
   function renderMe() {
     const box = $('me-box'); box.innerHTML = '';
     const m = myMember();
-    $('me-aside').textContent = m ? (m.desk === 0 ? '사장실' : m.desk > 0 ? '자리 ' + DESKS[m.desk].label : '자리 없음') : '';
+    $('me-aside').textContent = m && m.approved ? (m.desk === 0 ? '사장실' : m.desk > 0 ? '자리 ' + DESKS[m.desk].label : '자리 없음') : '';
     const st = S.store;
-    if (!st) {
-      const site = !window.claude && !S.cfgFound;
-      box.append(el('div', { class: 'notice info', text: site
-        ? '아직 저장소가 연결되지 않았어요. index.html 옆에 Supabase 주소와 키를 적은 config.js가 있어야 해요. 지금은 둘러보기만 돼요.'
-        : '저장소에 연결하지 못했어요. 로그인 상태를 확인해 주세요. 지금은 둘러보기만 돼요.' }));
-      return;
-    }
+    if (!st) { box.append(el('div', { class: 'notice info', text: !window.claude && !S.cfgFound ? '아직 저장소가 연결되지 않았어요. index.html 옆에 Supabase 주소와 키를 적은 config.js가 있어야 해요.' : '저장소에 연결하지 못했어요. 로그인 상태를 확인해 주세요.' })); return; }
     if (st.needsLogin) { box.append(loginForm()); return; }
-    if (!S.loaded) { box.append(el('div', { class: 'muted', text: S.slow ? '사무실 정보를 아직 불러오지 못했어요. 연결 상태를 확인해 주세요.' : '사무실 정보를 불러오는 중…' })); return; }
-    if (S.readOnly && !m) { box.append(el('div', { class: 'notice', text: '보기 전용이에요. 팀원으로 참여하려면 사무실 주인에게 “참여 가능(Contributor)” 이상 권한을 받아 주세요.' })); return; }
+    if (!S.loaded) { box.append(el('div', { class: 'muted', text: S.slow ? '사무실 정보를 아직 불러오지 못했어요.' : '불러오는 중…' })); return; }
+    if (S.readOnly && !m) { box.append(el('div', { class: 'notice', text: '보기 전용이에요. 참여하려면 사무실 주인에게 참여 권한을 받아 주세요.' })); return; }
     if (!m || S.editing) { box.append(joinForm(m)); return; }
     if (!m.approved) { box.append(pendingCard(m)); return; }
-
-    const t = todayOf(m);
+    const t = todayOf(m), cur = currentTask(m);
     const face = el('canvas'); paintFace(face, m);
-    const pill = m.status === 'in' ? el('span', { class: 'pill in', text: '근무 중 · ' + stamp(m.since) + '부터' })
-      : m.status === 'out' && t.lastOut ? el('span', { class: 'pill out', text: '퇴근 · ' + hhmm(t.lastOut) }) : el('span', { class: 'pill none', text: '출근 전' });
-    const open = m.tasks.filter(x => x.p < 100);
     box.append(
-      el('div', { class: 'profile' },
-        el('div', { class: 'face-frame' }, face),
-        el('div', { class: 'who' },
-          el('div', { class: 'who-name' }, m.name, m.role ? el('span', { class: 'rank', text: m.role }) : null),
-          el('div', { class: 'who-sub' }, pill))),
-      el('div', { class: 'clock-row' },
+      el('div', { class: 'me-head' }, el('div', { class: 'face' }, face), el('div', { style: 'min-width:0' },
+        el('div', { class: 'me-name', text: m.name }),
+        el('div', { class: 'badges' }, m.role ? el('span', { class: 'bdg g', text: m.role }) : null,
+          m.status === 'in' ? el('span', { class: 'bdg g', text: (cur ? '작업 중' : '대기') + ' · ' + stamp(m.since) + '~' }) : el('span', { class: 'bdg dk', text: m.status === 'out' ? '퇴근 ' + (t.lastOut ? hhmm(t.lastOut) : '') : '출근 전' })))),
+      el('div', { class: 'clock2' },
         el('button', { class: 'mc-btn green', type: 'button', disabled: m.status === 'in' || S.readOnly, onclick: clockIn, text: '출근하기' }),
         el('button', { class: 'mc-btn red', type: 'button', disabled: m.status !== 'in' || S.readOnly, onclick: clockOut, text: '퇴근하기' })),
       el('div', { class: 'stats' },
-        el('div', { class: 'stat' }, el('div', { class: 'k', text: '오늘 근무 시간' }), el('div', { class: 'v', id: 'my-ms', text: fmtDur(t.ms) })),
-        el('div', { class: 'stat' }, el('div', { class: 'k', text: '진행 중 업무 · 평균' }), el('div', { class: 'v', text: open.length + '개 · ' + avgP(open) + '%' }))),
-      el('div', { class: 'mini-actions' },
-        el('button', { class: 'mc-btn small green', type: 'button', onclick: () => openStatus(S.myId), text: '내 상태창 열기' }),
+        el('div', { class: 'stat' }, el('div', { class: 'k', text: '오늘 근무' }), el('div', { class: 'v', id: 'my-ms', text: fmtDur(t.ms) })),
+        el('div', { class: 'stat' }, el('div', { class: 'k', text: '오늘 완료' }), el('div', { class: 'v', text: t.done + '개' }))),
+      el('div', { class: 'btn-row' },
+        el('button', { class: 'mc-btn small green', type: 'button', onclick: () => openDrawer(S.myId), text: '내 상태창' }),
         el('button', { class: 'mc-btn small', type: 'button', onclick: () => { S.editing = true; S.draftSkin = null; renderMe(); }, text: '캐릭터 수정' }),
-        st.kind === 'supabase' ? el('button', { class: 'mc-btn small', type: 'button', onclick: async () => { await st.signOut(); location.reload(); }, text: '로그아웃' }) : null),
-      el('div', { class: 'muted', style: 'margin-top:8px', text: '업무 추가와 진행도는 사무실에서 내 캐릭터를 두 번 누르면 나오는 상태창에서 해요.' })
-    );
+        st.kind === 'supabase' ? el('button', { class: 'mc-btn small', type: 'button', onclick: async () => { await st.signOut(); location.reload(); }, text: '로그아웃' }) : null));
   }
-
   function pendingCard(m) {
-    const face = el('canvas'); paintFace(face, m);
-    const st = S.store;
+    const face = el('canvas'); paintFace(face, m); const st = S.store;
     return el('div', null,
-      el('div', { class: 'profile' },
-        el('div', { class: 'face-frame' }, face),
-        el('div', { class: 'who' },
-          el('div', { class: 'who-name' }, m.name, m.role ? el('span', { class: 'rank', text: m.role }) : null),
-          el('div', { class: 'who-sub' }, el('span', { class: 'pill none', text: '입사 승인 대기 중' })))),
-      el('div', { class: 'notice', style: 'margin-top:12px', text: (m.joined ? stamp(m.joined) + '에 ' : '') + '입사 신청을 보냈어요. 사장님이 승인하면 이 화면이 자동으로 바뀌고 사무실에 들어갈 수 있어요.' }),
-      el('div', { class: 'mini-actions' },
+      el('div', { class: 'me-head' }, el('div', { class: 'face' }, face), el('div', null, el('div', { class: 'me-name', text: m.name }), el('div', { class: 'badges' }, el('span', { class: 'bdg dk', text: '입사 승인 대기 중' })))),
+      el('div', { class: 'notice', style: 'margin-top:10px', text: (m.joined ? stamp(m.joined) + '에 ' : '') + '입사 신청을 보냈어요. 사장님이 승인하면 이 화면이 자동으로 바뀌어요.' }),
+      el('div', { class: 'btn-row' },
         el('button', { class: 'mc-btn small', type: 'button', onclick: () => { S.editing = true; S.draftSkin = null; renderMe(); }, text: '신청 내용 수정' }),
-        el('button', { class: 'mc-btn small red', type: 'button', text: '신청 취소', onclick: e => {
-          const b = e.currentTarget;
-          if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더 누르면 취소돼요'; return; }
-          queueWrite(() => st.deleteMember(S.myId)).then(() => log('입사 신청을 취소했어요')).catch(() => {});
-        } }),
+        el('button', { class: 'mc-btn small red', type: 'button', text: '신청 취소', onclick: e => { const b = e.currentTarget; if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더 누르면 취소'; return; } queueWrite(() => st.deleteMember(S.myId)).then(() => log('입사 신청을 취소했어요')).catch(() => {}); } }),
         st && st.kind === 'supabase' ? el('button', { class: 'mc-btn small', type: 'button', onclick: async () => { await st.signOut(); location.reload(); }, text: '로그아웃' }) : null));
   }
-
-  /* 사장 화면: 입사 신청 승인 */
   function renderApprovals() {
-    const sec = $('approve-sec');
-    const show = usesApproval() && S.isOwner;
-    sec.hidden = !show;
-    if (!show) return;
+    const sec = $('approve-sec'); const show = usesApproval() && S.isOwner; sec.hidden = !show; if (!show) return;
     const box = $('approve-box'); box.innerHTML = '';
-    const list = pendingList();
-    $('approve-count').textContent = list.length ? list.length + '명 대기' : '';
-    if (!list.length) { box.append(el('div', { class: 'muted', text: '새 입사 신청이 없어요. 동부원이 사이트에서 가입하고 신청하면 여기에 나와요.' })); return; }
+    const list = pendingList(); $('approve-count').textContent = list.length ? list.length + '명 대기' : '';
+    if (!list.length) { box.append(el('div', { class: 'muted', text: '새 입사 신청이 없어요.' })); return; }
     for (const m of list) {
       const face = el('canvas'); paintFace(face, m);
       const want = m.desk === 0 ? '사장실' : m.desk > 0 ? '자리 ' + DESKS[m.desk].label : '자리 없음';
       const clash = m.desk >= 0 && deskOwner(m.desk);
       box.append(el('div', { class: 'apv' },
-        el('div', { class: 'nm' }, face, el('div', { style: 'min-width:0' },
-          el('div', { class: 'apv-name', text: m.name + (m.role ? ' · ' + m.role : '') }),
-          el('div', { class: 'muted', text: '희망 ' + want + (clash ? ' (이미 사용 중 → 자리 없이 승인)' : '') + (m.joined ? ' · ' + stamp(m.joined) + ' 신청' : '') }))),
-        el('div', { class: 'apv-btns' },
-          el('button', { class: 'mc-btn small green', type: 'button', text: '승인', onclick: () => {
-            const patch = { approved: true }; if (clash) patch.desk = -1;
-            queueWrite(() => S.store.updateMember(m.id, patch)).then(() => { beep('xp'); log(m.name + ' 입사 승인!'); }).catch(() => {});
-          } }),
-          el('button', { class: 'mc-btn small red', type: 'button', text: '거절', onclick: e => {
-            const b = e.currentTarget;
-            if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더'; return; }
-            queueWrite(() => S.store.deleteMember(m.id)).then(() => log(m.name + ' 입사 신청 거절')).catch(() => {});
-          } }))));
+        el('div', { class: 'nm' }, face, el('div', { style: 'min-width:0' }, el('div', { text: m.name + (m.role ? ' · ' + m.role : '') }), el('div', { class: 'muted', text: '희망 ' + want + (clash ? ' (사용 중 → 자리 없이 승인)' : '') + (m.joined ? ' · ' + stamp(m.joined) : '') }))),
+        el('div', { class: 'btn-row', style: 'margin:0' },
+          el('button', { class: 'mc-btn small green', type: 'button', text: '승인', onclick: () => { const patch = { approved: true }; if (clash) patch.desk = -1; queueWrite(() => S.store.updateMember(m.id, patch)).then(() => { beep('xp'); log(m.name + ' 입사 승인!'); }).catch(() => {}); } }),
+          el('button', { class: 'mc-btn small red', type: 'button', text: '거절', onclick: e => { const b = e.currentTarget; if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더'; return; } queueWrite(() => S.store.deleteMember(m.id)).then(() => log(m.name + ' 입사 신청 거절')).catch(() => {}); } }))));
     }
   }
-
   function loginForm() {
     const st = S.store;
     const email = el('input', { class: 'txt', type: 'email', id: 'lg-email', autocomplete: 'email', placeholder: '이메일' });
@@ -1181,22 +1079,18 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
       if (!e || p.length < 6) { msg.textContent = '이메일과 6자 이상 비밀번호를 적어 주세요.'; return; }
       msg.textContent = kind === 'up' ? '가입하는 중…' : '로그인하는 중…';
       const r = kind === 'up' ? await st.signUp(e, p) : await st.signIn(e, p);
-      if (r.error) { msg.textContent = /Invalid login/i.test(r.error.message) ? '이메일이나 비밀번호가 맞지 않아요.' : /registered/i.test(r.error.message) ? '이미 가입한 이메일이에요. 로그인을 눌러 주세요.' : '실패했어요: ' + r.error.message; return; }
+      if (r.error) { msg.textContent = /Invalid login/i.test(r.error.message) ? '이메일이나 비밀번호가 맞지 않아요.' : /registered/i.test(r.error.message) ? '이미 가입한 이메일이에요. 로그인을 눌러 주세요.' : /not allowed/i.test(r.error.message) ? '지금은 가입을 받지 않아요. 사장님께 문의하세요.' : '실패했어요: ' + r.error.message; return; }
       if (kind === 'up' && !(r.data && r.data.session)) { msg.textContent = '가입 확인 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해 주세요.'; return; }
       location.reload();
     };
     const form = el('form', { class: 'login' },
       el('div', { class: 'notice info', text: '후동부 사무실에 들어가려면 로그인해 주세요.' }),
-      el('label', { class: 'field' }, '이메일', email),
-      el('label', { class: 'field' }, '비밀번호', pw),
-      el('div', { class: 'clock-row' },
-        el('button', { class: 'mc-btn green', type: 'submit', text: '로그인' }),
-        el('button', { class: 'mc-btn', type: 'button', onclick: () => go('up'), text: '가입하기' })),
+      el('label', { class: 'field' }, '이메일', email), el('label', { class: 'field' }, '비밀번호', pw),
+      el('div', { class: 'clock2', style: 'margin-top:0' }, el('button', { class: 'mc-btn green', type: 'submit', text: '로그인' }), el('button', { class: 'mc-btn', type: 'button', onclick: () => go('up'), text: '가입하기' })),
       msg);
     form.addEventListener('submit', e => { e.preventDefault(); go('in'); });
     return form;
   }
-
   function joinForm(m) {
     const editing = !!m;
     const taken = new Set([...S.members.entries()].filter(([id]) => id !== S.myId).map(([, x]) => x.desk));
@@ -1204,57 +1098,42 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
     const roleI = el('input', { class: 'txt', id: 'jf-role', maxlength: '10', placeholder: '예: 편집 담당' });
     const quoteI = el('input', { class: 'txt', id: 'jf-quote', maxlength: '40', placeholder: '캐릭터를 누르면 하는 말' });
     const deskS = el('select', { class: 'txt', id: 'jf-desk' });
-    DESKS.forEach((d, i) => {
-      if (i === 0 && !S.isOwner && !(m && m.desk === 0)) return;
-      if (taken.has(i)) return;
-      deskS.append(el('option', { value: String(i), text: i === 0 ? '사장실' : '자리 ' + d.label }));
-    });
-    deskS.append(el('option', { value: '-1', text: '자리 없이 (서서 근무)' }));
+    DESKS.forEach((d, i) => { if (i === 0 && !S.isOwner && !(m && m.desk === 0)) return; if (taken.has(i)) return; deskS.append(el('option', { value: String(i), text: i === 0 ? '사장실' : '자리 ' + d.label })); });
+    deskS.append(el('option', { value: '-1', text: '자리 없이' }));
     if (m) { nameI.value = m.name; roleI.value = m.role; quoteI.value = m.quote; deskS.value = String(m.desk); }
     else if (S.isOwner && !taken.has(0)) { nameI.value = '후케이'; roleI.value = '사장'; deskS.value = '0'; if (S.draftSkin == null) S.draftSkin = BOSS_SKIN; }
     const color = m ? m.color : hashColor(S.myId);
     const preview = el('div', { class: 'skin-preview' });
-    const drawPreview = () => { const c = el('canvas'); paintBody(c, { skin: S.draftSkin != null ? S.draftSkin : (m ? m.skin : ''), color }, 1); preview.innerHTML = ''; preview.append(c); };
+    const drawPreview = () => { const c = el('canvas'); paintBody(c, { skin: S.draftSkin != null ? S.draftSkin : (m ? m.skin : ''), color }, 1); preview.replaceChildren(c); };
     drawPreview();
     const msg = el('div', { class: 'muted', role: 'status', text: '스킨을 올리지 않으면 기본 캐릭터로 시작해요.' });
     const fileI = el('input', { type: 'file', accept: 'image/png', id: 'jf-skin', 'aria-label': '스킨 PNG 올리기' });
-    fileI.addEventListener('change', async () => {
-      try { S.draftSkin = await readSkinFile(fileI.files[0]); msg.textContent = '스킨을 불러왔어요.'; drawPreview(); }
-      catch (err) { msg.textContent = String(err); }
-      fileI.value = '';
-    });
+    fileI.addEventListener('change', async () => { try { S.draftSkin = await readSkinFile(fileI.files[0]); msg.textContent = '스킨을 불러왔어요.'; drawPreview(); } catch (err) { msg.textContent = String(err); } fileI.value = ''; });
+    const approvalNeeded = usesApproval() && !S.isOwner && !editing;
+    const st = S.store;
     const form = el('form', { class: 'join-form' },
-      el('div', { class: 'notice info', text: editing ? '캐릭터 정보를 고쳐요.' : usesApproval() && !S.isOwner ? '캐릭터를 만들어 입사 신청을 보내요. 사장님이 승인하면 사무실에 들어갈 수 있어요.' : '후동부 사무실에 입사해요! 캐릭터를 만들면 팀원 모두에게 보여요.' }),
-      el('div', { class: 'skin-pick' }, preview,
-        el('div', { style: 'display:flex;flex-direction:column;gap:6px;min-width:0' },
-          el('span', { class: 'mc-btn small file-btn' }, '스킨 PNG 올리기', fileI),
-          el('button', { class: 'mc-btn small', type: 'button', onclick: () => { S.draftSkin = ''; drawPreview(); msg.textContent = '기본 캐릭터로 바꿨어요.'; }, text: '기본 캐릭터로' }),
-          msg)),
-      el('div', { class: 'form-row' }, el('label', { class: 'field' }, '캐릭터 이름', nameI), el('label', { class: 'field' }, '역할', roleI)),
-      el('label', { class: 'field' }, '한마디', quoteI),
-      el('label', { class: 'field' }, '자리', deskS),
-      el('div', { class: 'clock-row', style: 'margin-top:4px' },
-        el('button', { class: 'mc-btn green', type: 'submit', text: editing ? '저장하기' : usesApproval() && !S.isOwner ? '입사 신청하기' : '입사하기' }),
+      el('div', { class: 'notice info', text: editing ? '캐릭터 정보를 고쳐요.' : approvalNeeded ? '캐릭터를 만들어 입사 신청을 보내요. 사장님이 승인하면 들어갈 수 있어요.' : '후동부 사무실에 입사해요!' }),
+      el('div', { class: 'skin-pick' }, preview, el('div', { style: 'display:flex;flex-direction:column;gap:5px;min-width:0' },
+        el('span', { class: 'mc-btn small file-btn' }, '스킨 PNG 올리기', fileI),
+        el('button', { class: 'mc-btn small', type: 'button', onclick: () => { S.draftSkin = ''; drawPreview(); msg.textContent = '기본 캐릭터로 바꿨어요.'; }, text: '기본 캐릭터로' }), msg)),
+      el('div', { class: 'row2' }, el('label', { class: 'field' }, '캐릭터 이름', nameI), el('label', { class: 'field' }, '역할', roleI)),
+      el('label', { class: 'field' }, '한마디', quoteI), el('label', { class: 'field' }, '자리', deskS),
+      el('div', { class: 'clock2', style: 'margin-top:2px' },
+        el('button', { class: 'mc-btn green', type: 'submit', text: editing ? '저장하기' : approvalNeeded ? '입사 신청하기' : '입사하기' }),
         editing ? el('button', { class: 'mc-btn', type: 'button', onclick: () => { S.editing = false; S.draftSkin = null; renderMe(); }, text: '취소' })
-          : S.store && S.store.kind === 'supabase' ? el('button', { class: 'mc-btn', type: 'button', onclick: async () => { await S.store.signOut(); location.reload(); }, text: '로그아웃' }) : el('span')),
-      S.store && S.store.kind === 'supabase' && S.store.email ? el('div', { class: 'muted', text: '로그인한 계정: ' + S.store.email }) : null);
+          : st && st.kind === 'supabase' ? el('button', { class: 'mc-btn', type: 'button', onclick: async () => { await st.signOut(); location.reload(); }, text: '로그아웃' }) : el('span')),
+      st && st.kind === 'supabase' && st.email ? el('div', { class: 'muted', text: '로그인한 계정: ' + st.email }) : null);
     form.addEventListener('submit', async e => {
       e.preventDefault();
-      const name = clip(nameI.value, 12);
-      if (!name) { msg.textContent = '캐릭터 이름을 적어 주세요.'; nameI.focus(); return; }
+      const name = clip(nameI.value, 12); if (!name) { msg.textContent = '캐릭터 이름을 적어 주세요.'; nameI.focus(); return; }
       let desk = parseInt(deskS.value, 10); if (!(desk >= -1 && desk <= 7)) desk = -1;
-      if (desk >= 0) { const o = deskOwner(desk); if (o && o.id !== S.myId) { msg.textContent = '방금 다른 팀원이 그 자리에 앉았어요. 다른 자리를 골라 주세요.'; return; } }
+      if (desk >= 0) { const o = deskOwner(desk); if (o && o.id !== S.myId) { msg.textContent = '방금 다른 팀원이 그 자리에 앉았어요.'; return; } }
       const skin = S.draftSkin != null ? S.draftSkin : (m ? m.skin : '');
       const body = { name, role: clip(roleI.value, 10), quote: clip(quoteI.value, 40), desk, skin, color };
       try {
         if (editing) await queueWrite(() => S.store.updateMember(S.myId, body));
-        else {
-          const approved = !usesApproval() || S.isOwner;
-          await queueWrite(() => S.store.setMember(S.myId, { ...body, status: 'none', since: null, day: null, tasks: [], joined: Date.now(), approved }));
-          if (!approved) log('입사 신청을 보냈어요. 사장님 승인을 기다려 주세요.');
-        }
+        else { const approved = !usesApproval() || S.isOwner; await queueWrite(() => S.store.setMember(S.myId, { ...body, status: 'none', since: null, day: null, tasks: [], log: [{ t: Date.now(), m: approved ? '입사' : '입사 신청' }], joined: Date.now(), approved })); if (!approved) log('입사 신청을 보냈어요.'); }
         beep('xp'); S.editing = false; S.draftSkin = null;
-        log(editing ? name + ' 캐릭터 정보 수정' : name + ' 입사! 환영해요');
       } catch (err) {}
     });
     return form;
@@ -1265,274 +1144,218 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
     const box = $('board-box'); box.innerHTML = '';
     $('today-label').textContent = longDate(Date.now());
     const list = crew();
-    if (!list.length) { box.append(el('div', { class: 'muted', text: S.loaded ? '아직 입사한 팀원이 없어요. “내 자리”에서 첫 캐릭터를 만들어 보세요.' : '불러오는 중…' })); return; }
+    if (!list.length) { box.append(el('div', { class: 'muted', text: S.loaded ? '아직 입사한 팀원이 없어요.' : '불러오는 중…' })); return; }
     const now = Date.now();
     const rows = list.slice().sort((a, b) => (b.status === 'in') - (a.status === 'in') || todayOf(b, now).ms - todayOf(a, now).ms);
     const tb = el('tbody');
     for (const m of rows) {
-      const t = todayOf(m, now);
-      const face = el('canvas'); paintFace(face, m);
-      const st = m.status === 'in' ? el('span', { class: 'pill in', text: stamp(m.since) + ' 출근' })
-        : t.lastOut ? el('span', { class: 'pill out', text: hhmm(t.lastOut) + ' 퇴근' }) : el('span', { class: 'pill none', text: '미출근' });
-      tb.append(el('tr', { class: m.id === S.statusFor ? 'sel' : '', tabindex: '0', onclick: () => openStatus(m.id), onkeydown: e => { if (e.key === 'Enter') openStatus(m.id); } },
-        el('td', null, el('div', { class: 'nm' }, face, el('span', { text: m.name + (m.id === S.myId ? ' (나)' : '') }))),
-        el('td', null, st),
-        el('td', { class: 'num', text: fmtShort(t.ms) }),
-        el('td', { class: 'num', text: t.done + '개' })));
+      const t = todayOf(m, now); const face = el('canvas'); paintFace(face, m);
+      const stt = m.status === 'in' ? el('span', { class: 'bdg g', text: stamp(m.since) + ' 출근' }) : t.lastOut ? el('span', { class: 'bdg dk', text: hhmm(t.lastOut) + ' 퇴근' }) : el('span', { class: 'bdg dk', text: '미출근' });
+      tb.append(el('tr', { class: m.id === S.drawerFor ? 'sel' : '', tabindex: '0', onclick: () => openDrawer(m.id), onkeydown: e => { if (e.key === 'Enter') openDrawer(m.id); } },
+        el('td', null, el('div', { class: 'nm' }, face, el('span', { text: m.name + (m.id === S.myId ? ' (나)' : '') }))), el('td', null, stt),
+        el('td', { class: 'num', text: fmtShort(t.ms) }), el('td', { class: 'num', text: t.done + '개' })));
     }
-    box.append(el('div', { class: 'board-wrap' }, el('table', { class: 'board' },
-      el('thead', null, el('tr', null, el('th', { text: '팀원' }), el('th', { text: '출퇴근' }), el('th', { class: 'num', text: '근무' }), el('th', { class: 'num', text: '완료' }))), tb)),
-      el('div', { class: 'muted', style: 'margin-top:8px', text: '이름을 누르면 상태창이 열려요.' }));
+    box.append(el('div', { style: 'overflow-x:auto' }, el('table', { class: 'board' }, el('thead', null, el('tr', null, el('th', { text: '팀원' }), el('th', { text: '출퇴근' }), el('th', { class: 'num', text: '근무' }), el('th', { class: 'num', text: '완료' }))), tb)));
   }
 
-  /* ================= 컨텐츠 요약 ================= */
-  function contentStats(c) {
-    const all = crew().flatMap(m => m.tasks.filter(t => t.c === c.id).map(t => ({ ...t, who: m })));
-    return { tasks: all, pct: avgP(all), done: all.filter(t => t.p === 100).length, people: new Set(all.map(t => t.who.id)).size };
-  }
-  function renderContents() {
-    const box = $('content-box'); box.innerHTML = '';
-    $('content-count').textContent = S.contents.length + '개';
-    if (!S.contents.length) { box.append(el('div', { class: 'muted', text: S.loaded ? '등록된 컨텐츠가 없어요. 상태창에서 추가할 수 있어요.' : '불러오는 중…' })); return; }
-    const wrap = el('div', { class: 'c-sum' });
-    for (const c of S.contents) {
-      const s = contentStats(c);
-      wrap.append(el('div', { class: 'c-sum-row' },
-        el('div', { class: 'top' }, el('span', { text: c.name }), el('span', { text: s.pct + '% · 업무 ' + s.tasks.length + '개 · ' + s.people + '명' })),
-        el('div', { class: 'xp-bar' }, el('div', { class: 'xp-fill', style: 'width:' + s.pct + '%' }))));
-    }
-    box.append(wrap, el('div', { class: 'muted', style: 'margin-top:10px', text: '진행도는 각 업무 진행도의 평균이에요. 컨텐츠 추가와 업무 진행도는 캐릭터 상태창에서 바꿔요.' }));
-  }
-
-  /* ================= 상태창 ================= */
+  /* ================= 오른쪽 서랍 상태창 ================= */
   let lastFocus = null;
-  function openStatus(id) {
+  function openDrawer(id) {
     if (id !== NPC_ID && !S.members.has(id)) return;
-    if (S.statusFor !== id) lastFocus = document.activeElement;
-    S.statusFor = id;
-    beep('open');
+    if (S.drawerFor !== id) lastFocus = document.activeElement;
+    S.drawerFor = id; beep('open'); hideTip();
     if (id !== NPC_ID) subscribeWeek(id);
-    $('modal-back').hidden = false;
-    renderStatus();
-    renderDesks(); renderHotbar(); renderBoard();
-    const close = $('modal').querySelector('.close'); if (close) close.focus();
+    $('drawer').hidden = false;
+    renderDrawer(); renderDesks(); renderBoard();
+    const c = $('drawer').querySelector('.dr-close'); if (c) c.focus();
   }
-  function closeStatus() {
-    S.statusFor = null;
-    $('modal-back').hidden = true;
+  function closeDrawer() {
+    S.drawerFor = null; $('drawer').hidden = true;
     if (S.weekUnsub) { S.weekUnsub(); S.weekUnsub = null; } S.weekFor = null; S.week = [];
-    renderDesks(); renderHotbar(); renderBoard();
+    renderDesks(); renderBoard();
     if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
   }
-  $('modal-back').addEventListener('click', e => { if (e.target === e.currentTarget) closeStatus(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('modal-back').hidden) closeStatus(); });
-
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('drawer').hidden) closeDrawer(); });
   function subscribeWeek(id) {
     if (S.weekFor === id) return;
     if (S.weekUnsub) { S.weekUnsub(); S.weekUnsub = null; }
     S.weekFor = id; S.week = [];
     if (!S.store) return;
-    try { S.weekUnsub = S.store.onWeek(id, list => { S.week = list || []; if (S.statusFor === id) renderStatus(); }); } catch (e) {}
+    try { S.weekUnsub = S.store.onWeek(id, list => { S.week = list || []; if (S.drawerFor === id) renderDrawer(); }); } catch (e) {}
   }
-
-  function segBar(t, editable) {
-    const seg = el('div', { class: 'seg', role: editable ? 'group' : 'img', 'aria-label': t.t + ' 진행도 ' + t.p + '%' });
+  function bar4(t, editable) {
+    const b = el('div', { class: 'big-bar', role: editable ? 'group' : 'img', 'aria-label': t.t + ' 진행도 ' + t.p + '%' });
     for (let k = 1; k <= 4; k++) {
       const on = t.p >= k * 25;
-      if (editable) seg.append(el('button', { type: 'button', class: on ? 'on' : '', 'aria-label': (k * 25) + '%로 설정', title: (k * 25) + '%', onclick: () => setProgress(t.id, t.p === k * 25 ? (k - 1) * 25 : k * 25) }));
-      else seg.append(el('span', { class: on ? 'on' : '' }));
+      b.append(editable ? el('button', { type: 'button', class: on ? 'on' : '', title: (k * 25) + '%', 'aria-label': (k * 25) + '%로', onclick: () => setProgress(t.id, t.p === k * 25 ? (k - 1) * 25 : k * 25) }) : el('span', { class: on ? 'on' : '' }));
     }
-    return seg;
+    return b;
   }
-
-  function renderStatus() {
-    const modal = $('modal');
-    const id = S.statusFor; if (!id) return;
-    const isNpc = id === NPC_ID;
-    const m = isNpc ? npcBoss() : S.members.get(id);
-    if (!m) { closeStatus(); return; }
-    const mine = !isNpc && id === S.myId && !S.readOnly;
-    const now = Date.now();
-    const t = isNpc ? { ms: 0, done: 0 } : todayOf(m, now);
-    const body = el('canvas'); paintBody(body, m, 4);
-    const statusText = isNpc ? '아직 입사 등록 전' : m.status === 'in' ? '근무 중 · ' + stamp(m.since) + ' 출근' : m.status === 'out' ? '퇴근 · ' + stamp(m.since) : '출근 전';
+  function renderDrawer() {
+    const dr = $('drawer'); const id = S.drawerFor; if (!id) return;
+    const isNpc = id === NPC_ID; const m = isNpc ? npcBoss() : S.members.get(id);
+    if (!m) { closeDrawer(); return; }
+    const mine = !isNpc && id === S.myId && !S.readOnly && m.approved;
+    const now = Date.now(); const t = isNpc ? { ms: 0, done: 0 } : todayOf(m, now);
+    const face = el('canvas'); paintFace(face, m);
+    const cur = currentTask(m), opens = openTasks(m), dones = doneTasks(m);
+    const stBadge = isNpc ? el('span', { class: 'bdg dk', text: '등록 전' }) : m.status === 'in' ? el('span', { class: 'bdg g', text: cur ? '작업 중' : '대기' }) : el('span', { class: 'bdg dk', text: m.status === 'out' ? '퇴근' : '출근 전' });
     const kids = [
-      el('button', { class: 'mc-btn close', type: 'button', 'aria-label': '상태창 닫기', onclick: closeStatus, text: 'X' }),
-      el('div', { class: 'st-head' },
-        el('div', { class: 'st-avatar' }, body),
-        el('div', { style: 'min-width:0' },
-          el('h2', { id: 'st-name', text: m.name + (mine ? ' (나)' : '') }),
-          m.role ? el('span', { class: 'st-role', text: m.role }) : null,
-          m.quote ? el('div', { class: 'st-quote', text: '“' + m.quote + '”' }) : null,
-          el('div', { class: 'st-now' }, longDate(now) + ' ', el('b', { id: 'st-clock', text: hhmmss(now) })),
-          el('div', { class: 'st-stats' },
-            el('div', { class: 'st-stat' }, el('div', { class: 'k', text: '상태' }), el('div', { class: 'v', style: 'font-size:16px', text: statusText })),
-            el('div', { class: 'st-stat' }, el('div', { class: 'k', text: '오늘 근무' }), el('div', { class: 'v', id: 'st-ms', text: fmtDur(t.ms) })),
-            el('div', { class: 'st-stat' }, el('div', { class: 'k', text: '오늘 완료 업무' }), el('div', { class: 'v', text: t.done + '개' })))))
+      el('div', { class: 'dr-banner', style: 'background-image:' + bg(SPR.banner(hashNum(id) % 997)) }, el('button', { class: 'mc-btn dr-close', type: 'button', 'aria-label': '상태창 닫기', onclick: closeDrawer, text: 'X' }))
     ];
+    const body = el('div', { class: 'dr-body' },
+      el('div', { class: 'dr-head' }, el('div', { class: 'dr-face' }, face), el('div', { style: 'min-width:0' },
+        el('div', { class: 'dr-name', id: 'dr-name', style: '--c:' + m.color }, el('i'), el('span', { text: m.name + (id === S.myId ? ' (나)' : '') })),
+        el('div', { class: 'badges' }, m.role ? el('span', { class: 'bdg g', text: m.role }) : null, stBadge, el('span', { class: 'bdg', text: m.desk === 0 ? '사장실' : m.desk > 0 ? '자리 ' + m.desk + '번' : '자리 없음' })),
+        m.quote ? el('div', { class: 'dr-quote', text: '“' + m.quote + '”' }) : null)));
+    // 인벤토리: 끝낸 업무가 금괴로 쌓여요
+    const inv = el('div', { class: 'inv-row', role: 'img', 'aria-label': '완료한 업무 ' + dones.length + '개' });
+    for (let k = 0; k < 9; k++) {
+      const dt = dones[k];
+      inv.append(el('div', { class: 'slot', title: dt ? dt.t + ' (' + mdhm(dt.at || now) + ' 완료)' : '' }, dt ? el('img', { src: SPR.ingot(), alt: '' }) : null, k === 8 && dones.length > 9 ? el('span', { class: 'q', text: '+' + (dones.length - 8) }) : null));
+    }
+    body.append(inv);
+    body.append(el('div', { class: 'stats', style: 'grid-template-columns:repeat(3,1fr)' },
+      el('div', { class: 'card', style: 'padding:6px 8px' }, el('div', { class: 'muted', style: 'color:#5a5a5a', text: '오늘 근무' }), el('div', { id: 'dr-ms', text: fmtDur(t.ms) })),
+      el('div', { class: 'card', style: 'padding:6px 8px;margin:0' }, el('div', { class: 'muted', style: 'color:#5a5a5a', text: '오늘 완료' }), el('div', { text: t.done + '개' })),
+      el('div', { class: 'card', style: 'padding:6px 8px;margin:0' }, el('div', { class: 'muted', style: 'color:#5a5a5a', text: '지금' }), el('div', { id: 'dr-clock', text: hhmm(now) }))));
+
     if (isNpc) {
-      kids.push(el('div', { class: 'notice info', text: S.isOwner ? '사장님! “내 자리”에서 입사하기를 누르면 이 자리가 진짜 내 자리가 돼요. 이름과 스킨은 미리 채워져 있어요.' : '사장님이 아직 입사 등록을 하지 않았어요.' }));
+      body.append(el('div', { class: 'notice info', style: 'margin-top:14px', text: S.isOwner ? '사장님! 왼쪽 “내 자리”에서 입사하면 이 자리가 진짜 내 자리가 돼요.' : '사장님이 아직 입사 등록을 하지 않았어요.' }));
     } else {
-      // 업무 진행도
-      const tasks = m.tasks.slice().sort((a, b) => (a.p === 100) - (b.p === 100) || (b.added || 0) - (a.added || 0));
-      const sec = el('div', { class: 'st-sec' },
-        el('div', { class: 'st-sec-head' }, el('h3', { text: '업무 진행도' }), el('span', { text: tasks.filter(x => x.p < 100).length + '개 진행 중 · 평균 ' + avgP(tasks.filter(x => x.p < 100)) + '%' })));
-      if (!tasks.length) sec.append(el('div', { class: 'st-empty', text: mine ? '아직 업무가 없어요. 아래에서 추가해 보세요.' : '등록된 업무가 없어요.' }));
-      for (const tk of tasks) {
-        const c = S.contents.find(x => x.id === tk.c);
-        sec.append(el('div', { class: 'ptask' + (tk.p === 100 ? ' done' : '') },
-          el('div', { class: 'pt-name', text: tk.t }),
-          el('div', { class: 'pt-meta' },
-            el('span', { class: 'tag' + (c ? '' : ' none'), text: c ? c.name : '기타' }),
-            el('span', { class: 'pt-pct', text: tk.p + '%' })),
-          segBar(tk, mine),
-          el('div', { class: 'seg-zero' },
-            el('span', { text: tk.p === 100 && tk.at ? stamp(tk.at) + ' 완료' : tk.added ? stamp(tk.added) + ' 추가' : '' }),
-            mine ? el('span', null,
-              tk.p > 0 ? el('button', { type: 'button', onclick: () => setProgress(tk.id, 0), text: '0%로' }) : null, ' ',
-              el('button', { type: 'button', onclick: () => removeTask(tk.id), text: '지우기' })) : null)));
+      // 지금 하는 일
+      const now1 = el('div', { class: 'dr-sec' }, el('h3', { text: '지금 하는 일' }));
+      if (!cur) now1.append(el('div', { class: 'card', text: mine ? '진행 중인 업무가 없어요. 아래에서 업무를 추가해 보세요.' : '진행 중인 업무가 없어요.' }));
+      else {
+        const c = S.contents.find(x => x.id === cur.c);
+        now1.append(el('div', { class: 'card' },
+          el('div', { class: 'task-title' }, el('span', { text: cur.t }), el('span', { class: 'bdg ' + (cur.p > 0 ? 'g' : 'dk'), text: cur.p > 0 ? '작업 중' : '대기' }), c ? el('span', { class: 'bdg blue', text: c.name }) : null),
+          bar4(cur, mine), el('div', { class: 'pct', text: cur.p + '%' }),
+          el('div', { class: 'meta' }, el('span', { text: (cur.start ? '시작 ' + mdhm(cur.start) : cur.added ? '추가 ' + mdhm(cur.added) : '') + (cur.upd ? ' · 갱신 ' + ago(cur.upd) : '') }),
+            mine ? el('span', null, cur.p > 0 ? el('button', { type: 'button', onclick: () => setProgress(cur.id, 0), text: '0%로' }) : null, ' ', el('button', { type: 'button', onclick: () => removeTask(cur.id), text: '지우기' })) : null)));
+      }
+      if (opens.length > 1) {
+        const others = el('div', { class: 'card' });
+        for (const o of opens.slice(1)) {
+          const c = S.contents.find(x => x.id === o.c);
+          others.append(el('div', { class: 'mini' }, el('span', { text: o.t + (c ? ' · ' + c.name : '') }), el('span', { class: 'muted', style: 'color:#5a5a5a', text: o.p + '%' }), bar4(o, mine)));
+        }
+        now1.append(el('div', { class: 'muted', style: 'color:#5a5a5a;margin:8px 0 4px', text: '다른 업무 ' + (opens.length - 1) + '개' }), others);
       }
       if (mine) {
-        const inp = el('input', { class: 'txt', type: 'text', maxlength: '60', id: 'st-add', placeholder: '새 업무 (예: 맵 준비)', 'aria-label': '새 업무' });
-        const sel = el('select', { class: 'txt', id: 'st-add-c', 'aria-label': '컨텐츠 선택' }, el('option', { value: '', text: '컨텐츠: 기타 업무' }), S.contents.map(c => el('option', { value: c.id, text: '컨텐츠: ' + c.name })));
+        const inp = el('input', { class: 'txt', type: 'text', maxlength: '60', id: 'dr-add', placeholder: '새 업무 (예: 맵 준비)', 'aria-label': '새 업무' });
+        const sel = el('select', { class: 'txt', id: 'dr-add-c', 'aria-label': '컨텐츠 선택' }, el('option', { value: '', text: '컨텐츠: 기타' }), S.contents.map(c => el('option', { value: c.id, text: '컨텐츠: ' + c.name })));
+        if (S.view !== 'all') sel.value = S.view;
         const f = el('form', { class: 'add-row' }, sel, inp, el('button', { class: 'mc-btn green', type: 'submit', text: '업무 추가' }));
         f.addEventListener('submit', e => { e.preventDefault(); if (!clip(inp.value, 60)) return; addTask(inp.value, sel.value); inp.value = ''; });
-        sec.append(f, el('div', { class: 'st-empty', style: 'margin-top:6px;font-size:13px', text: '칸을 누르면 25%씩 진행도가 바뀌어요. 네 칸을 다 채우면 완료로 기록돼요.' }));
+        now1.append(f, el('div', { class: 'muted', style: 'color:#5a5a5a;margin-top:4px', text: '막대 칸을 누르면 25%씩 진행돼요. 네 칸을 다 채우면 완료!' }));
       }
-      kids.push(sec);
-    }
+      body.append(now1);
 
-    // 컨텐츠 진행도 + 추가
-    const csec = el('div', { class: 'st-sec' },
-      el('div', { class: 'st-sec-head' }, el('h3', { text: '진행 중인 컨텐츠' }), el('span', { text: S.contents.length + '개' })));
-    if (!S.contents.length) csec.append(el('div', { class: 'st-empty', text: '아직 컨텐츠가 없어요.' }));
-    for (const c of S.contents) {
-      const s = contentStats(c);
-      const his = isNpc ? [] : s.tasks.filter(x => x.who.id === id);
-      const row = el('div', { class: 'cprog' },
-        el('div', { class: 'cp-name', text: c.name }),
-        el('div', { class: 'cp-num', text: s.pct + '% · 완료 ' + s.done + '/' + s.tasks.length }),
-        el('div', { class: 'xp-bar' }, el('div', { class: 'xp-fill', style: 'width:' + s.pct + '%' })),
-        isNpc ? null : el('div', { class: 'cp-mine', text: his.length ? m.name + ' 담당 ' + his.length + '개 · 평균 ' + avgP(his) + '%' : m.name + '의 업무 없음' }));
-      if (S.isOwner && mine) row.append(el('button', {
-        class: 'mc-btn small red del-c', type: 'button', text: '컨텐츠 끝내기',
-        onclick: e => {
-          const b = e.currentTarget;
-          if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더 누르면 목록에서 빠져요'; return; }
-          queueWrite(() => S.store.deleteContent(c.id)).then(() => log('컨텐츠 종료: ' + c.name)).catch(() => {});
-        }
-      }));
-      csec.append(row);
-    }
-    if (mine) {
-      const ci = el('input', { class: 'txt', type: 'text', maxlength: '20', id: 'st-new-c', placeholder: '새 컨텐츠 이름', 'aria-label': '새 컨텐츠 이름' });
-      const cf = el('form', { class: 'add-row' }, ci, el('button', { class: 'mc-btn green', type: 'submit', text: '컨텐츠 추가' }));
-      cf.addEventListener('submit', e => { e.preventDefault(); addContent(ci.value); ci.value = ''; });
-      csec.append(cf);
-    }
-    kids.push(csec);
+      // 진행 기록
+      const tl = el('ul', { class: 'timeline' });
+      const logs = (m.log || []).slice().reverse().slice(0, 14);
+      if (!logs.length) tl.append(el('li', null, el('time', { text: '' }), el('span', { text: '아직 기록이 없어요.' })));
+      for (const l of logs) tl.append(el('li', null, el('time', { text: mdhm(l.t) }), el('span', { text: l.m })));
+      body.append(el('div', { class: 'dr-sec' }, el('h3', { text: '진행 기록' }), el('div', { class: 'card' }, tl)));
 
-    // 최근 7일
-    if (!isNpc) {
+      // 지난 작업
+      const past = el('details', { class: 'past card' }, el('summary', { text: '지난 작업 ' + dones.length + '건' }));
+      if (!dones.length) past.append(el('div', { class: 'muted', style: 'color:#5a5a5a;padding-top:6px', text: '끝낸 업무가 아직 없어요.' }));
+      for (const d of dones.slice(0, 30)) { const c = S.contents.find(x => x.id === d.c); past.append(el('div', { class: 'past-item' }, el('span', null, d.t + (c ? ' · ' + c.name : '') + ' ', el('span', { class: 'bdg blue', text: '완료' })), el('span', { class: 'when', text: d.at ? mdhm(d.at) : '' }))); }
+      body.append(el('div', { class: 'dr-sec' }, past));
+
+      // 최근 7일
       const byDate = new Map(S.week.filter(d => d && d.date).map(d => [d.date, d]));
       const days = [];
       for (let k = 6; k >= 0; k--) {
         const dt = new Date(now); dt.setDate(dt.getDate() - k);
         const key = dateKey(dt.getTime()), d = byDate.get(key);
-        let ms = d ? Number(d.ms) || 0 : 0, done = d && Array.isArray(d.done) ? d.done.length : 0;
-        if (k === 0) { ms = Math.max(ms, t.ms); done = Math.max(done, t.done); }
-        days.push({ ms, done, today: k === 0, label: WEEKDAY[dt.getDay()], md: (dt.getMonth() + 1) + '/' + dt.getDate() });
+        let ms = d ? Number(d.ms) || 0 : 0, dn = d && Array.isArray(d.done) ? d.done.length : 0;
+        if (k === 0) { ms = Math.max(ms, t.ms); dn = Math.max(dn, t.done); }
+        days.push({ ms, dn, today: k === 0, lab: (dt.getMonth() + 1) + '/' + dt.getDate() + ' ' + WEEKDAY[dt.getDay()] });
       }
       const max = Math.max(4 * 3600000, ...days.map(d => d.ms));
-      const total = days.reduce((a, d) => a + d.ms, 0), totalDone = days.reduce((a, d) => a + d.done, 0);
-      const week = el('div', { class: 'week', role: 'img', 'aria-label': '최근 7일 근무: ' + days.map(d => d.md + ' ' + fmtShort(d.ms)).join(', ') });
-      for (const d of days) week.append(el('div', { class: 'wk' },
-        el('span', { class: 'h', text: d.ms ? fmtShort(d.ms) : '-' }),
-        el('div', { class: 'bar-box' }, el('div', { class: 'bar' + (d.today ? ' today' : ''), style: 'height:' + Math.round(d.ms / max * 100) + '%' })),
-        el('span', { class: 'n', text: d.done ? '완료 ' + d.done : '' }),
-        el('span', { class: 'd', text: d.md + ' ' + d.label })));
-      kids.push(el('div', { class: 'st-sec' },
-        el('div', { class: 'st-sec-head' }, el('h3', { text: '최근 7일 근무' }), el('span', { text: fmtDur(total) + ' · 업무 ' + totalDone + '개 완료' })),
-        week, el('div', { class: 'legend', text: '막대는 하루 근무 시간이에요. 노란 막대가 오늘이에요.' })));
-      if (S.isOwner && !mine && S.store) kids.push(el('div', { class: 'st-actions' }, el('button', {
-        class: 'mc-btn small red', type: 'button', text: '이 팀원 내보내기',
-        onclick: e => {
-          const b = e.currentTarget;
-          if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더 누르면 내보내요'; return; }
-          queueWrite(() => S.store.deleteMember(id)).then(() => { log(m.name + ' 팀원을 내보냈어요'); closeStatus(); }).catch(() => {});
-        }
-      })));
+      const total = days.reduce((a, d) => a + d.ms, 0);
+      const week = el('div', { class: 'week', role: 'img', 'aria-label': '최근 7일 근무 ' + days.map(d => d.lab + ' ' + fmtShort(d.ms)).join(', ') });
+      for (const d of days) week.append(el('div', { class: 'wk' }, el('span', { text: d.ms ? fmtShort(d.ms) : '-' }), el('div', { class: 'bb' }, el('i', { class: d.today ? 'today' : '', style: 'height:' + Math.round(d.ms / max * 100) + '%' })), el('span', { class: 'n', text: d.dn ? '✓' + d.dn : '' }), el('span', { class: 'd', text: d.lab })));
+      const wsec = el('div', { class: 'dr-sec' }, el('h3', null, '최근 7일 근무', el('span', { text: fmtDur(total) })), el('div', { class: 'card' }, week));
+      body.append(wsec);
+
+      // 컨텐츠 진행도 (+ 관리)
+      const csec = el('div', { class: 'dr-sec' }, el('h3', null, '컨텐츠 진행도', el('span', { text: S.contents.length + '개' })));
+      const ccard = el('div', { class: 'card' });
+      if (!S.contents.length) ccard.append(el('div', { class: 'muted', style: 'color:#5a5a5a', text: '컨텐츠가 없어요.' }));
+      for (const c of S.contents) {
+        const all = crew().flatMap(x => (x.tasks || []).filter(tk => tk.c === c.id)); const pct = avgP(all);
+        const mineN = (m.tasks || []).filter(tk => tk.c === c.id).length;
+        const pb = el('div', { class: 'pbar' }); for (let k = 0; k < 10; k++) pb.append(el('i', { class: pct >= (k + 1) * 10 ? 'on' : '' }));
+        ccard.append(el('div', { class: 'cp' }, el('span', { text: c.name + (mineN ? ' · 담당 ' + mineN + '개' : '') }), el('span', { text: pct + '%' }), pb,
+          S.isOwner && mine ? el('button', { class: 'mc-btn small red', type: 'button', style: 'grid-column:1/-1;justify-self:start', text: '컨텐츠 끝내기', onclick: e => { const b = e.currentTarget; if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더 누르면 목록에서 빠져요'; return; } queueWrite(() => S.store.deleteContent(c.id)).then(() => { log('컨텐츠 종료: ' + c.name); if (S.view === c.id) S.view = 'all'; }).catch(() => {}); } }) : null));
+      }
+      csec.append(ccard); body.append(csec);
+
+      if (S.isOwner && !mine && id !== S.myId && S.store) body.append(el('div', { class: 'btn-row', style: 'margin-top:16px' }, el('button', { class: 'mc-btn small red', type: 'button', text: '이 팀원 내보내기', onclick: e => { const b = e.currentTarget; if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더 누르면 내보내요'; return; } queueWrite(() => S.store.deleteMember(id)).then(() => { log(m.name + ' 팀원을 내보냈어요'); closeDrawer(); }).catch(() => {}); } })));
     }
-    modal.replaceChildren(...kids.filter(Boolean));
+    kids.push(body);
+    dr.replaceChildren(...kids);
   }
 
   /* ================= 전체 렌더 ================= */
   function preserve(fn) {
     const vals = {};
-    document.querySelectorAll('.side input[id], .side select[id], .modal input[id], .modal select[id]').forEach(i => { if (i.type !== 'file' && i.type !== 'checkbox') vals[i.id] = i.value; });
+    document.querySelectorAll('.side input[id], .side select[id], .drawer input[id], .drawer select[id], #new-content').forEach(i => { if (i.type !== 'file' && i.type !== 'checkbox') vals[i.id] = i.value; });
     const act = document.activeElement && document.activeElement.id;
+    const drScroll = $('drawer').scrollTop;
     fn();
     for (const [id, v] of Object.entries(vals)) { const e = document.getElementById(id); if (e && e.type !== 'file') e.value = v; }
+    $('drawer').scrollTop = drScroll;
     if (act) { const e = document.getElementById(act); if (e && e !== document.activeElement) e.focus(); }
-  }
-  function renderHeadcount() {
-    const list = crew(), inN = list.filter(m => m.status === 'in').length;
-    const hc = $('headcount'); hc.textContent = '';
-    hc.append('근무 중 ', el('b', { text: String(inN) }), '명 · 팀원 ' + list.length + '명');
   }
   function renderAll() {
     preserve(() => {
-      syncMobs(); renderDesks(); renderHotbar(); renderMe(); renderApprovals(); renderBoard(); renderContents(); renderHeadcount();
-      if (S.statusFor) renderStatus();
+      renderStage(); syncMobs(); renderDesks(); renderTabs(); renderProgress(); renderStatusbar();
+      renderMe(); renderApprovals(); renderBoard();
+      if (S.drawerFor) renderDrawer();
     });
   }
 
-  // 날짜·시계 (화면 표시만, 저장 없음)
+  /* 시계 (표시만) */
   function tick() {
     const now = Date.now();
-    $('now-date').textContent = longDate(now);
-    $('now-time').textContent = hhmmss(now);
-    $('board-date').textContent = (new Date(now).getMonth() + 1) + '.' + new Date(now).getDate() + ' ' + WEEKDAY[new Date(now).getDay()];
-    $('board-time').textContent = hhmm(now);
+    const n = $('now'); n.textContent = ''; n.append(longDate(now) + ' ', el('b', { text: hhmmss(now) }));
     const m = myMember(); const v = $('my-ms'); if (m && v) v.textContent = fmtDur(todayOf(m, now).ms);
-    const sc = $('st-clock'); if (sc) sc.textContent = hhmmss(now);
-    const sm = $('st-ms'); const sm2 = S.statusFor && S.members.get(S.statusFor); if (sm && sm2) sm.textContent = fmtDur(todayOf(sm2, now).ms);
+    const dc = $('dr-clock'); if (dc) dc.textContent = hhmm(now);
+    const dm = $('dr-ms'); const dmm = S.drawerFor && S.members.get(S.drawerFor); if (dm && dmm) dm.textContent = fmtDur(todayOf(dmm, now).ms);
   }
   tick(); setInterval(tick, 1000);
   let lastDay = dateKey();
-  setInterval(() => { if (document.hidden) return; if (dateKey() !== lastDay) { lastDay = dateKey(); renderAll(); } else renderBoard(); }, 60000);
+  setInterval(() => { if (document.hidden) return; if (dateKey() !== lastDay) { lastDay = dateKey(); renderAll(); } else { renderBoard(); if (S.drawerFor) preserve(renderDrawer); } }, 60000);
 
-  /* ================= 버튼 ================= */
-  $('btn-sound').addEventListener('click', e => {
-    soundOn = !soundOn;
-    e.currentTarget.setAttribute('aria-pressed', String(soundOn));
-    e.currentTarget.textContent = soundOn ? '사운드 켜짐' : '사운드 꺼짐';
-    beep('click');
-  });
+  /* 버튼 */
+  px('brand', 16, 16, () => {});
+  (() => { const c = $('brand-ico'), x = c.getContext('2d'); const img = new Image(); img.onload = () => { x.imageSmoothingEnabled = false; x.drawImage(img, 0, 0, 16, 16); x.fillStyle = '#5ea13a'; x.fillRect(0, 0, 16, 5); x.fillStyle = '#3d6b22'; x.fillRect(0, 5, 16, 1); }; img.src = T.dirt(); })();
+  $('btn-sound').addEventListener('click', e => { soundOn = !soundOn; e.currentTarget.setAttribute('aria-pressed', String(soundOn)); e.currentTarget.textContent = soundOn ? '사운드 켜짐' : '사운드 꺼짐'; beep('click'); });
   $('btn-meeting').addEventListener('click', () => {
     const list = [...mobs.values()];
-    list.forEach((mob, i) => {
-      const a = (i / Math.max(1, list.length)) * Math.PI * 2;
-      walkTo(mob, 50 + Math.cos(a) * 12, 66 + Math.sin(a) * 8, () => { if (i === 0) say(mob, pick(LINES.meeting)); });
-    });
-    log('회의 소집: 근무 중 ' + list.length + '명 집합 (내 화면에서만)');
+    list.forEach((mob, i) => { const a = (i / Math.max(1, list.length)) * Math.PI * 2; walkTo(mob, 50 + Math.cos(a) * 14, 74 + Math.sin(a) * 3, () => { if (i === 0) say(mob, pick(LINES.meeting)); setTimeout(() => { const h = homeOf(mob); walkTo(mob, h.x, h.y); }, 6000); }); });
+    log('회의 소집: ' + list.length + '명 집합 (내 화면에서만)');
   });
+  $('add-content').addEventListener('submit', e => { e.preventDefault(); addContent($('new-content').value); $('new-content').value = ''; $('add-content').hidden = true; });
+  $('add-content-cancel').addEventListener('click', () => { $('add-content').hidden = true; });
   window.addEventListener('keydown', e => {
-    if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !$('modal-back').hidden) return;
-    const n = parseInt(e.key, 10);
-    if (n >= 1 && n <= 8) { const o = deskOwner(n - 1); if (o) openStatus(o.id); }
+    if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !$('drawer').hidden) return;
+    const n = parseInt(e.key, 10); if (n >= 1 && n <= 8) { const o = deskOwner(n - 1); if (o) openDrawer(o.id); }
   });
 
   /* ================= 연결 ================= */
   async function connect() {
-    hotCaption('캐릭터를 끌어 옮기고, 두 번 누르면 상태창이 열려요.');
     renderAll();
     log('후동부 사무실에 들어왔어요');
     let store = null;
     try {
       if (window.claude && typeof window.claude.use === 'function') store = await claudeStore();
       else {
-        // 키는 index.html 옆의 config.js에 두면 index.html을 바꿔도 다시 넣을 필요가 없어요
         let cfg = SUPABASE;
         if (!(cfg.url && cfg.key)) { try { await loadScript('config.js'); } catch (e) {} if (window.HUDONGBU_SUPABASE) cfg = window.HUDONGBU_SUPABASE; }
         S.cfgFound = !!(cfg && cfg.url && cfg.key);
@@ -1540,39 +1363,31 @@ select.txt { appearance: none; -webkit-appearance: none; background-image: linea
       }
     } catch (e) { log('저장소에 연결하지 못했어요.'); }
     S.store = store;
+    $('live').classList.toggle('on', !!store); $('live-t').textContent = store ? '실시간 연결됨' : '연결 안 됨';
     if (!store) { S.loaded = true; renderAll(); return; }
-    $('backend').textContent = store.label;
     S.myId = store.myId; S.isOwner = store.isOwner; S.readOnly = !store.canWrite;
-    if (store.needsLogin) { S.loaded = true; }
-
+    if (store.needsLogin) S.loaded = true;
     const slowTimer = setTimeout(() => { if (!S.loaded) { S.slow = true; renderAll(); } }, 10000);
     let gotM = false, gotC = false;
     const ready = () => { if (gotM && gotC && !S.loaded) { S.loaded = true; S.slow = false; clearTimeout(slowTimer); } };
-
     store.onMembers(list => {
       if (!list) { gotM = true; ready(); renderAll(); return; }
       const next = new Map();
       for (const d of list) next.set(d.id, normMember(d.id, d));
-      if (S.loaded && gotM) {
-        for (const [id, d] of next) {
-          const prev = S.members.get(id);
-          if (!prev) log(d.approved ? d.name + ' 입사!' : '새 입사 신청: ' + d.name);
-          else if (!prev.approved && d.approved) {
-            log(d.name + ' 입사 승인!');
-            if (id === S.myId) { beep('xp'); setTimeout(() => location.reload(), 800); }
-          }
-          else if (prev.status !== d.status) {
-            if (d.status === 'in') log(d.name + ' 출근 (' + hhmm(d.since) + ')');
-            else if (d.status === 'out') { const t = todayOf(d); log(d.name + ' 퇴근 · 오늘 ' + fmtDur(t.ms) + ', 업무 ' + t.done + '개'); }
-          }
-        }
+      if (S.loaded && gotM) for (const [id, d] of next) {
+        const prev = S.members.get(id);
+        if (!prev) log(d.approved ? d.name + ' 입사!' : '새 입사 신청: ' + d.name);
+        else if (!prev.approved && d.approved) { log(d.name + ' 입사 승인!'); if (id === S.myId) { beep('xp'); setTimeout(() => location.reload(), 800); } }
+        else if (prev.status !== d.status) { if (d.status === 'in') log(d.name + ' 출근 (' + hhmm(d.since) + ')'); else if (d.status === 'out') { const t = todayOf(d); log(d.name + ' 퇴근 · 오늘 ' + fmtDur(t.ms) + ', 업무 ' + t.done + '개'); } }
+        else { const pd = doneTasks(prev).length, nd = doneTasks(d).length; if (nd > pd) log(d.name + ' 업무 완료: ' + doneTasks(d)[0].t); }
       }
       S.members = next;
-      if (S.statusFor && S.statusFor !== NPC_ID && !S.members.has(S.statusFor)) closeStatus();
+      if (S.drawerFor && S.drawerFor !== NPC_ID && !S.members.has(S.drawerFor)) closeDrawer();
       gotM = true; ready(); renderAll();
     });
     store.onContents(list => {
       S.contents = (list || []).map(d => ({ id: String(d.id), name: clip(d.name, 20) || '컨텐츠', order: Number(d.order) || 0 })).sort((a, b) => a.order - b.order);
+      if (S.view !== 'all' && !S.contents.find(c => c.id === S.view)) S.view = 'all';
       gotC = true; ready(); renderAll();
     });
   }
